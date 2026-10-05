@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
+  root "openui#index"
+
+  post  "/api/chat",   to: "openui#create"
+  match "/api/chat",   to: "openui#create", via: :options
   post  "/api/openui", to: "openui#create"
   match "/api/openui", to: "openui#create", via: :options
 

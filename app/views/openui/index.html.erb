@@ -1,0 +1,26 @@
+<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+  <div class="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex-1 flex flex-col">
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          OpenUI Agent
+          <span class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-mono font-normal">Rails 8 + ruby_llm + Ollama</span>
+        </h1>
+        <p class="text-sm text-slate-400 mt-1">Generative UI runtime streaming directly from local models.</p>
+      </div>
+
+      <% if @chats.any? %>
+        <div class="hidden md:flex items-center gap-2 text-xs text-slate-400">
+          <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span><%= pluralize(@chats.count, "chat session") %> saved</span>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="flex-1 min-h-[600px] shadow-2xl rounded-2xl overflow-hidden border border-slate-800">
+      <div data-controller="openui-renderer" data-openui-renderer-endpoint-value="/api/chat" class="h-full">
+        <div class="p-8 text-center text-slate-500">Loading OpenUI Generative Workspace...</div>
+      </div>
+    </div>
+  </div>
+</div>

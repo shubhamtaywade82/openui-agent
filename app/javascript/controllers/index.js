@@ -6,3 +6,7 @@ import { application } from "./application"
 
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
+
+import OpenuiRendererController from "./openui_renderer_controller"
+application.register("openui-renderer", OpenuiRendererController)
+
