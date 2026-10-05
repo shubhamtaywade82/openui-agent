@@ -98,7 +98,7 @@ class AgentRunner
 
   def configure_llm(agent)
     llm = agent.to_llm
-    llm.with_model(@options[:model]) if @options[:model].present?
+    llm.with_model(@options[:model], provider: :ollama, assume_exists: true) if @options[:model].present?
     llm.with_temperature(@options[:temperature].to_f) if @options[:temperature].present?
     llm.with_params(options: { num_ctx: @options[:num_ctx].to_i }) if @options[:num_ctx].present?
     filter_tools(llm) if @options[:disabled_tools].is_a?(Array)

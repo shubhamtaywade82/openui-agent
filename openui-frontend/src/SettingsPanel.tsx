@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react"
-import { Settings, X, Cpu, Thermometer, Layers, ChevronDown } from "lucide-react"
+import { Settings, X, Cpu, Thermometer, ChevronDown } from "lucide-react"
 import { ModelSwitcher } from "@openuidev/react-ui"
 import { AVAILABLE_TOOLS, agentOptions, updateAgentOptions, type AgentOptions } from "./lib/settings"
 import { useModels } from "./ModelPicker"
 
-// Mirror ApplicationAgent: a smaller context would truncate the ~13k-token system prompt.
 const DEFAULT_TEMPERATURE = 0.3
-const DEFAULT_NUM_CTX = 32768
 
 interface Props {
   onSettingsChange?: (opts: AgentOptions) => void
@@ -17,7 +15,6 @@ export function SettingsPanel({ onSettingsChange }: Props) {
   const { models, defaultModel } = useModels()
   const [selectedModel, setSelectedModel] = useState(agentOptions.model ?? "")
   const [temperature, setTemperature] = useState(agentOptions.temperature ?? DEFAULT_TEMPERATURE)
-  const [numCtx, setNumCtx] = useState(agentOptions.num_ctx ?? DEFAULT_NUM_CTX)
   const [disabledTools, setDisabledTools] = useState<string[]>(agentOptions.disabled_tools ?? [])
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -36,7 +33,6 @@ export function SettingsPanel({ onSettingsChange }: Props) {
     if (!open) {
       setSelectedModel(agentOptions.model ?? "")
       setTemperature(agentOptions.temperature ?? DEFAULT_TEMPERATURE)
-      setNumCtx(agentOptions.num_ctx ?? DEFAULT_NUM_CTX)
       setDisabledTools(agentOptions.disabled_tools ?? [])
     }
     setOpen(!open)
@@ -46,7 +42,6 @@ export function SettingsPanel({ onSettingsChange }: Props) {
     updateAgentOptions({
       model: selectedModel || undefined,
       temperature,
-      num_ctx: numCtx,
       disabled_tools: disabledTools.length ? disabledTools : undefined,
     })
     onSettingsChange?.({ ...agentOptions })
@@ -108,19 +103,6 @@ export function SettingsPanel({ onSettingsChange }: Props) {
                 className="settings-range"
               />
               <span className="settings-range-value">{temperature.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div className="settings-section">
-            <div className="settings-section-label"><Layers size={13} /> Context size</div>
-            <div className="settings-slider-row">
-              <input
-                type="range" min="512" max="32768" step="512"
-                value={numCtx}
-                onChange={e => setNumCtx(parseInt(e.target.value, 10))}
-                className="settings-range"
-              />
-              <span className="settings-range-value">{numCtx.toLocaleString()}</span>
             </div>
           </div>
 

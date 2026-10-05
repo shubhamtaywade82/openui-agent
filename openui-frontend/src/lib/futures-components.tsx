@@ -1,20 +1,15 @@
-import { useEffect, useState } from "react"
 import { defineComponent } from "@openuidev/react-lang"
 import { z } from "zod"
 
-const FUTURES_REST = "https://fapi.binance.com/fapi/v1"
-const CANDLE_INTERVALS = ["5m", "15m", "1h", "4h", "1d"]
-const CANDLE_COUNT = 60
-const CHART_REFRESH_MS = 30_000
 const RSI_OVERBOUGHT = 70
 const RSI_OVERSOLD = 30
 
-const nullableNumber = z.number().nullable().optional()
+export const nullableNumber = z.number().nullable().optional()
 const compactUsd = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 })
 
-const formatPrice = (value: number) =>
+export const formatPrice = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: value < 1 ? 6 : 2 })
-const signed = (value: number, digits = 2) => `${value >= 0 ? "+" : ""}${value.toFixed(digits)}`
+export const signed = (value: number, digits = 2) => `${value >= 0 ? "+" : ""}${value.toFixed(digits)}`
 const direction = (value: number) => (value >= 0 ? "up" : "down")
 
 function Tile({ label, value, note }: { label: string; value: string; note?: string }) {
@@ -173,107 +168,63 @@ export const IndicatorsCard = defineComponent({
   component: IndicatorsCardView,
 })
 
-interface Candle {
-  open: number
-  high: number
-  low: number
-  close: number
+interface TimeframeRow {
+  interval: string
+  price: number
+  rsi_14?: number | null
+  ema_20?: number | null
+  ema_50?: number | null
+  ema_200?: number | null
 }
 
-type CandleState = { status: "loading" } | { status: "error" } | { status: "ready"; candles: Candle[] }
-
-function useFuturesCandles(symbol: string, interval: string): CandleState {
-  const [state, setState] = useState<CandleState>({ status: "loading" })
-
-  useEffect(() => {
-    const controller = new AbortController()
-    const load = () =>
-      fetch(`${FUTURES_REST}/klines?symbol=${symbol}&interval=${interval}&limit=${CANDLE_COUNT}`, { signal: controller.signal })
-        .then((response) => (response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`))))
-        .then((rows: string[][]) =>
-          setState({
-            status: "ready",
-            candles: rows.map((row) => ({ open: +row[1], high: +row[2], low: +row[3], close: +row[4] })),
-          }),
-        )
-        .catch((error) => {
-          if (controller.signal.aborted) return
-          console.warn("[CandleChart] candle fetch failed", error)
-          setState({ status: "error" })
-        })
-
-    load()
-    const timer = setInterval(load, CHART_REFRESH_MS)
-    return () => {
-      controller.abort()
-      clearInterval(timer)
-    }
-  }, [symbol, interval])
-
-  return state
-}
-
-const CHART = { width: 600, height: 220, padding: 12 }
-
-function CandleSvg({ candles }: { candles: Candle[] }) {
-  const high = Math.max(...candles.map((candle) => candle.high))
-  const low = Math.min(...candles.map((candle) => candle.low))
-  const span = high - low || 1
-  const slot = (CHART.width - CHART.padding * 2) / candles.length
-  const y = (price: number) => CHART.padding + ((high - price) / span) * (CHART.height - CHART.padding * 2)
-
-  return (
-    <svg viewBox={`0 0 ${CHART.width} ${CHART.height}`} className="gen-fut__chart" role="img" aria-label="Candlestick chart">
-      {candles.map((candle, index) => {
-        const x = CHART.padding + index * slot + slot / 2
-        const tone = candle.close >= candle.open ? "up" : "down"
-        const bodyTop = y(Math.max(candle.open, candle.close))
-        const bodyHeight = Math.max(1, Math.abs(y(candle.open) - y(candle.close)))
-        return (
-          <g key={index} className={`gen-fut__candle gen-fut__candle--${tone}`}>
-            <line x1={x} x2={x} y1={y(candle.high)} y2={y(candle.low)} />
-            <rect x={x - slot * 0.33} y={bodyTop} width={slot * 0.66} height={bodyHeight} />
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-interface CandleChartProps {
-  symbol: string
-  interval?: string | null
-}
-
-function CandleChartView({ props }: { props: CandleChartProps }) {
-  const symbol = props.symbol.toUpperCase().replace(/[^A-Z0-9]/g, "")
-  const interval = CANDLE_INTERVALS.includes(props.interval ?? "") ? props.interval! : "1h"
-  const state = useFuturesCandles(symbol, interval)
-  const last = state.status === "ready" ? state.candles[state.candles.length - 1] : null
-
+function TimeframesCardView({ props }: { props: { symbol: string; timeframes: TimeframeRow[] } }) {
   return (
     <article className="gen-card gen-fut">
       <header className="gen-card__head">
         <div>
-          <h4>{symbol} chart</h4>
-          <span>{interval} candles, last {CANDLE_COUNT}, USDT-M perpetual</span>
+          <h4>{props.symbol} across timeframes</h4>
+          <span>RSI and moving-average position</span>
         </div>
-        {last && <span className="gen-fut__label">Close {formatPrice(last.close)}</span>}
       </header>
-      {state.status === "loading" && <p className="gen-fut__status">Loading candles…</p>}
-      {state.status === "error" && <p className="gen-fut__status">Could not load candles for {symbol}. Check the symbol or try again.</p>}
-      {state.status === "ready" && <CandleSvg candles={state.candles} />}
+      <table className="gen-fut__table">
+        <thead>
+          <tr><th>Timeframe</th><th>RSI (14)</th><th>Trend</th></tr>
+        </thead>
+        <tbody>
+          {props.timeframes.map((row) => {
+            const trend = trendSummary(row.price, [row.ema_20, row.ema_50, row.ema_200])
+            return (
+              <tr key={row.interval}>
+                <td>{row.interval}</td>
+                <td>{row.rsi_14 != null ? `${row.rsi_14.toFixed(1)} ${rsiZone(row.rsi_14)}` : "n/a"}</td>
+                <td className={trend ? `gen-fut__trend--${trend.tone}` : undefined}>{trend?.label ?? "n/a"}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </article>
   )
 }
 
-export const CandleChart = defineComponent({
-  name: "CandleChart",
+export const TimeframesCard = defineComponent({
+  name: "TimeframesCard",
   description:
-    "Live candlestick chart for a Binance USD-M perpetual. It loads its own candles, so only the symbol and an optional interval (5m, 15m, 1h, 4h, 1d) are needed.",
+    "Table comparing RSI and moving-average trend across timeframes (15m, 1h, 4h, 1d). Use after calling the binance_futures tool with action multi_timeframe; pass its timeframes list unchanged.",
   props: z.object({
     symbol: z.string().describe("Contract, e.g. BTCUSDT"),
-    interval: z.string().nullable().optional().describe("5m, 15m, 1h (default), 4h or 1d"),
+    timeframes: z
+      .array(
+        z.object({
+          interval: z.string(),
+          price: z.number(),
+          rsi_14: nullableNumber,
+          ema_20: nullableNumber,
+          ema_50: nullableNumber,
+          ema_200: nullableNumber,
+        }),
+      )
+      .describe("timeframes from the tool"),
   }),
-  component: CandleChartView,
+  component: TimeframesCardView,
 })

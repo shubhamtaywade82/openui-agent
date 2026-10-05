@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_05_053723) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_05_115719) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -91,6 +91,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_05_053723) do
     t.index ["modalities"], name: "index_models_on_modalities", using: :gin
     t.index ["provider", "model_id"], name: "index_models_on_provider_and_model_id", unique: true
     t.index ["provider"], name: "index_models_on_provider"
+  end
+
+  create_table "tasks", force: :cascade do |t|
+    t.string "title", null: false
+    t.string "priority", default: "medium", null: false
+    t.boolean "completed", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "tool_calls", force: :cascade do |t|

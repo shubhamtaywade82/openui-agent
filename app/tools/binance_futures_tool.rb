@@ -13,7 +13,8 @@ class BinanceFuturesTool < ApplicationTool
   param :symbol, type: :string, desc: "Perpetual contract, e.g. 'BTCUSDT', 'ETHUSDT', 'SOLUSDT'"
   param :action, type: :string,
                  desc: "'overview' (default): price, funding, open interest, positioning. " \
-                       "'indicators': RSI/EMA/ATR/VWAP from candles. 'funding_history': last 10 funding payments.",
+                       "'indicators': RSI/EMA/ATR/VWAP from candles. 'multi_timeframe': RSI and EMA trend on 15m, 1h, 4h and 1d. " \
+                       "'funding_history': last 10 funding payments.",
                  required: false
   param :interval, type: :string, desc: "Candle interval for 'indicators': 5m, 15m, 1h (default), 4h, 1d", required: false
 
@@ -25,8 +26,11 @@ class BinanceFuturesTool < ApplicationTool
   # Field order must match the FuturesCard / IndicatorsCard signatures in the system prompt.
   OVERVIEW_CARD_FIELDS = %i[symbol mark_price funding_rate_percent open_interest_usd long_short_ratio
                             basis_percent change_percent_24h open_interest_change_24h_percent].freeze
+  TIMEFRAMES = %w[15m 1h 4h 1d].freeze
+  TIMEFRAME_FIELDS = %i[interval price rsi_14 ema_20 ema_50 ema_200].freeze
   INDICATOR_CARD_FIELDS = %i[symbol interval price rsi_14 ema_20 ema_50 ema_200 atr_percent vwap].freeze
   # A 4B local model ignores far-away prompt rules but copies what the tool result tells it to.
+  FUNDING_CHART_LINE = ->(sym) { "fundingChart = FundingChart(\"#{sym}\")" }
   DISCLAIMER_LINE = 'disclaimer = TextContent("Analysis only, not financial advice.")'
   RENDER_INSTRUCTION = [
     DISCLAIMER_LINE,
@@ -42,6 +46,7 @@ class BinanceFuturesTool < ApplicationTool
 
     case action.to_s.downcase
     when "indicators" then indicators(sym, INTERVALS.include?(interval) ? interval : DEFAULT_INTERVAL)
+    when "multi_timeframe" then multi_timeframe(sym)
     when "funding_history" then funding_history(sym)
     else overview(sym)
     end
@@ -111,6 +116,17 @@ class BinanceFuturesTool < ApplicationTool
 
     lines = [ "indicatorsCard = IndicatorsCard(#{dsl_args(data, INDICATOR_CARD_FIELDS)})", "candleChart = CandleChart(\"#{sym}\", \"#{interval}\")" ]
     data.merge(render_as: lines + RENDER_INSTRUCTION)
+  end
+
+  def multi_timeframe(sym)
+    rows = TIMEFRAMES.map { |interval| indicator_values(sym, interval) }
+    return error_result("Not enough candle data for #{sym}") if rows.any? { |row| row[:error] }
+
+    objects = rows.map { |row| "{#{TIMEFRAME_FIELDS.map { |field| "#{field}: #{dsl_value(row[field])}" }.join(', ')}}" }
+    {
+      symbol: sym, timeframes: rows.map { |row| row.slice(*TIMEFRAME_FIELDS) },
+      render_as: [ "timeframesCard = TimeframesCard(\"#{sym}\", [#{objects.join(', ')}])", FUNDING_CHART_LINE.call(sym) ] + RENDER_INSTRUCTION
+    }
   end
 
   def indicator_values(sym, interval)

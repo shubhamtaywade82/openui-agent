@@ -23,6 +23,8 @@ const STARTERS = [
   { displayText: "Search product docs", prompt: "Search docs for product features and pricing tiers", icon: <FileSearch size={14} /> },
   { displayText: "Bitcoin live ticker", prompt: "Show live Binance market data and real-time tick stream for BTCUSDT in a CryptoCard", icon: <Sparkles size={14} /> },
   { displayText: "Ethereum live ticker", prompt: "Show live Binance market data and real-time tick stream for ETHUSDT in a CryptoCard", icon: <Activity size={14} /> },
+  { displayText: "Futures analysis", prompt: "Analyse BTCUSDT perpetual futures: funding, open interest, positioning and technicals", icon: <Activity size={14} /> },
+  { displayText: "My watchlist", prompt: "Show my crypto watchlist", icon: <Sparkles size={14} /> },
   { displayText: "Compound interest", prompt: "Calculate compound interest for $10,000 at 7% over 10 years using the calculator tool", icon: <Calculator size={14} /> },
   { displayText: "3 metric dashboard", prompt: "Show me a dashboard with revenue, users, and conversion rate", icon: <LayoutDashboard size={14} /> },
 ]
