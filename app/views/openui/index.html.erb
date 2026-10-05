@@ -9,6 +9,9 @@
         <p class="text-sm text-slate-400 mt-1">Generative UI runtime streaming directly from local models.</p>
       </div>
 
+      <%= link_to "Open full UI ↗", ENV.fetch("FRONTEND_ORIGIN", "http://localhost:5173"),
+            class: "text-sm bg-indigo-500 hover:bg-indigo-400 text-white font-medium px-4 py-2 rounded-lg transition-colors" %>
+
       <% if @chats.any? %>
         <div class="hidden md:flex items-center gap-2 text-xs text-slate-400">
           <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
