@@ -8,6 +8,8 @@ class SseStreamer
 
   def write_event(data)
     @stream.write("data: #{data.to_json}\n\n")
+  rescue IOError, Errno::EPIPE, ActionController::Live::ClientDisconnected
+    nil
   end
 
   def write_chunk(content, model:)
@@ -34,6 +36,8 @@ class SseStreamer
 
   def write_done
     @stream.write("data: [DONE]\n\n")
+  rescue IOError, Errno::EPIPE, ActionController::Live::ClientDisconnected
+    nil
   end
 
   def close
