@@ -4,51 +4,26 @@ import { agUIAdapter, fetchLLM, type ChatStorage, type Thread } from "@openuidev
 import { observability, toErrorInfo } from "@openuidev/observability"
 import { OpenUIDevtools } from "@openuidev/devtools"
 import {
-  CloudSun,
-  TrendingUp,
-  CheckSquare,
-  FileSearch,
-  LayoutDashboard,
-  Sparkles,
-  Sun,
-  Moon,
+  CloudSun, TrendingUp, CheckSquare, FileSearch, LayoutDashboard,
+  Sparkles, Sun, Moon, Activity, Calculator
 } from "lucide-react"
 import { myLibrary } from "./lib/my-library"
 import { darkTheme, lightTheme } from "./lib/theme"
+import { agentOptions } from "./lib/settings"
+import { SettingsPanel } from "./SettingsPanel"
+import { ThreadToolbar } from "./ThreadToolbar"
 
 const API_ROOT = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api"
 
 const STARTERS = [
-  {
-    displayText: "Weather in Tokyo",
-    prompt: "What's the weather in Tokyo and show it in a nice card?",
-    icon: <CloudSun size={16} />,
-  },
-  {
-    displayText: "Apple stock quote",
-    prompt: "Get the latest stock quote for AAPL and display it",
-    icon: <TrendingUp size={16} />,
-  },
-  {
-    displayText: "View pending tasks",
-    prompt: "List my current tasks using the task manager",
-    icon: <CheckSquare size={16} />,
-  },
-  {
-    displayText: "Search product docs",
-    prompt: "Search docs for product features and pricing tiers",
-    icon: <FileSearch size={16} />,
-  },
-  {
-    displayText: "Bitcoin live ticker",
-    prompt: "Show live Binance market data and real-time tick stream for BTCUSDT in a CryptoCard",
-    icon: <Sparkles size={16} />,
-  },
-  {
-    displayText: "3 metric dashboard",
-    prompt: "Show me a dashboard with revenue, users, and conversion rate",
-    icon: <LayoutDashboard size={16} />,
-  },
+  { displayText: "Weather in Tokyo", prompt: "What's the weather in Tokyo and show it in a nice card?", icon: <CloudSun size={14} /> },
+  { displayText: "Apple stock quote", prompt: "Get the latest stock quote for AAPL and display it", icon: <TrendingUp size={14} /> },
+  { displayText: "View pending tasks", prompt: "List my current tasks using the task manager", icon: <CheckSquare size={14} /> },
+  { displayText: "Search product docs", prompt: "Search docs for product features and pricing tiers", icon: <FileSearch size={14} /> },
+  { displayText: "Bitcoin live ticker", prompt: "Show live Binance market data and real-time tick stream for BTCUSDT in a CryptoCard", icon: <Sparkles size={14} /> },
+  { displayText: "Ethereum live ticker", prompt: "Show live Binance market data and real-time tick stream for ETHUSDT in a CryptoCard", icon: <Activity size={14} /> },
+  { displayText: "Compound interest", prompt: "Calculate compound interest for $10,000 at 7% over 10 years using the calculator tool", icon: <Calculator size={14} /> },
+  { displayText: "3 metric dashboard", prompt: "Show me a dashboard with revenue, users, and conversion rate", icon: <LayoutDashboard size={14} /> },
 ]
 
 const TITLE_MAX_CHARS = 40
@@ -118,8 +93,19 @@ const storage: ChatStorage = {
 const llm = fetchLLM({
   url: `${API_ROOT}/openui`,
   streamAdapter: agUIAdapter(),
-  // Opts in to typed AG-UI events so tool calls show up in the chat timeline
-  body: { protocol: "ag-ui" },
+  // Opts in to typed AG-UI events so tool calls show up in the chat timeline.
+  // `body` is a getter so agentOptions mutations are picked up on each request.
+  get body() {
+    return {
+      protocol: "ag-ui",
+      options: {
+        ...(agentOptions.model && { model: agentOptions.model }),
+        ...(agentOptions.temperature !== undefined && { temperature: agentOptions.temperature }),
+        ...(agentOptions.num_ctx && { num_ctx: agentOptions.num_ctx }),
+        ...(agentOptions.disabled_tools?.length && { disabled_tools: agentOptions.disabled_tools }),
+      },
+    }
+  },
   messageFormat: openAIMessageFormat,
 })
 
@@ -203,6 +189,8 @@ function SidebarActions() {
 
 export default function App() {
   const [colorMode, toggleColorMode] = useColorMode()
+  // Re-render trigger so header updates when settings change (no heavy state needed)
+  const [, setSettingsTick] = useState(0)
   useEffect(logOpenUiEvents, [])
 
   return (
@@ -216,8 +204,15 @@ export default function App() {
           <AgentInterface.SidebarContent><AgentInterface.ThreadList /></AgentInterface.SidebarContent>
           <div className="openui-agent-sidebar-footer"><SidebarThemeToggle mode={colorMode} onToggle={toggleColorMode} /></div>
         </AgentInterface.Sidebar>
+        <AgentInterface.ThreadHeader className="openui-thread-header-custom">
+          <div className="thread-header-actions">
+            <SettingsPanel onSettingsChange={() => setSettingsTick(t => t + 1)} />
+            <ThreadToolbar />
+          </div>
+        </AgentInterface.ThreadHeader>
         <AgentInterface.Welcome
           glowAnimation={true} image={<HeroBadge />}
+          starterVariant="short"
           title="Ask for an answer. Get an interface."
           description="Weather, stocks, tasks, docs, dashboards, forms and charts all render as live components, generated by a model running on your machine."
           starters={STARTERS}

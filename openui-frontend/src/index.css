@@ -112,18 +112,49 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .openui-agent-thread-composer__submit-button { border-radius: 50% !important; background: var(--openui-interactive-accent-default) !important; color: #fff !important; transition: transform 0.15s ease, background 0.15s ease !important; }
 .openui-agent-desktop-welcome-composer__submit-button:not(:disabled):hover,
 .openui-agent-thread-composer__submit-button:not(:disabled):hover { transform: scale(1.08); background: var(--openui-interactive-accent-hover) !important; }
-.openui-agent-conversation-starter { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; max-width: 680px; width: 100%; }
-.openui-agent-conversation-starter-item-long { border-radius: var(--openui-radius-m); border: 1px solid var(--openui-border-default); background: color-mix(in oklch, var(--openui-foreground) 75%, transparent); backdrop-filter: blur(8px); padding: 0.75rem 1rem; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
-.openui-agent-conversation-starter-item-long:hover { background: var(--openui-highlight); border-color: var(--openui-border-interactive); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07); }
-.openui-agent-conversation-starter-item-long__icon {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: color-mix(in oklch, var(--openui-border-accent) 15%, transparent);
-  color: var(--openui-border-accent);
+/* ---- Conversation Starters: content-sized capsules ---- */
+.openui-agent-conversation-starter { max-width: 768px !important; width: 100% !important; margin-top: 1.25rem !important; padding: 0 !important; }
+.openui-agent-conversation-starter--short,
+.openui-agent-conversation-starter--long,
+.openui-agent-conversation-starter__carousel-content { display: flex !important; flex-wrap: wrap !important; justify-content: center !important; gap: 0.5rem !important; transform: none !important; }
+.openui-agent-conversation-starter-item-short,
+.openui-agent-conversation-starter-item-long {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
+  padding: 0.45rem 0.95rem !important;
+  border-radius: 9999px !important;
+  border: 1px solid var(--openui-border-default) !important;
+  background: color-mix(in oklch, var(--openui-foreground) 80%, transparent) !important;
+  backdrop-filter: blur(8px) !important;
+  font-family: var(--openui-font-body) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--openui-text-neutral-primary) !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
 }
+.openui-agent-conversation-starter-item-short:hover,
+.openui-agent-conversation-starter-item-long:hover {
+  background: var(--openui-highlight) !important;
+  border-color: var(--openui-border-accent) !important;
+  color: var(--openui-text-neutral-primary) !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 4px 14px color-mix(in oklch, var(--openui-border-accent) 20%, transparent) !important;
+}
+.openui-agent-conversation-starter-item-short__icon,
+.openui-agent-conversation-starter-item-long__icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  color: var(--openui-border-accent) !important;
+}
+.openui-agent-conversation-starter-item-short__text,
+.openui-agent-conversation-starter-item-long__text { white-space: nowrap !important; }
+.openui-agent-conversation-starter-item-long__arrow,
+.openui-agent-conversation-starter__separator { display: none !important; }
 /* ---- Markdown, Code Blocks & Tables ---- */
 .openui-markdown-renderer { line-height: 1.7; font-size: 0.95rem; }
 .openui-markdown-renderer h1, .openui-markdown-renderer h2, .openui-markdown-renderer h3 { font-family: var(--openui-font-heading); font-weight: 700; letter-spacing: -0.02em; }
@@ -256,3 +287,211 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .gen-crypto__currency { font-size: 1.25rem; font-weight: 600; color: var(--openui-text-neutral-tertiary); }
 .gen-crypto__price-val { font-family: var(--openui-font-heading); font-size: 2.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .gen-crypto__tick-time { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; font-size: 0.72rem; color: var(--openui-text-neutral-tertiary); }
+
+/* ---- Thread header custom layout ---- */
+.openui-thread-header-custom { justify-content: flex-end; }
+.thread-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  padding: 0 0.5rem;
+}
+
+/* ---- Settings Panel ---- */
+.settings-panel-root { position: relative; }
+.settings-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  font-family: var(--openui-font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--openui-text-neutral-secondary);
+  background: color-mix(in oklch, var(--openui-foreground) 70%, transparent);
+  border: 1px solid var(--openui-border-default);
+  border-radius: var(--openui-radius-m);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.settings-trigger-btn:hover {
+  background: var(--openui-highlight);
+  border-color: var(--openui-border-accent);
+  color: var(--openui-text-neutral-primary);
+}
+.settings-trigger-label { display: inline; }
+.settings-chevron {
+  transition: transform 0.2s ease;
+  opacity: 0.5;
+}
+.settings-chevron.open { transform: rotate(180deg); }
+
+.settings-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 320px;
+  background: color-mix(in oklch, var(--openui-background) 94%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--openui-border-default);
+  border-radius: var(--openui-radius-l);
+  box-shadow: 0 8px 40px color-mix(in oklch, black 20%, transparent),
+              0 2px 8px color-mix(in oklch, black 10%, transparent);
+  padding: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: dropdown-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.settings-title {
+  font-family: var(--openui-font-heading);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--openui-text-neutral-primary);
+}
+.settings-close {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--openui-text-neutral-tertiary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.settings-close:hover { background: var(--openui-highlight); color: var(--openui-text-neutral-primary); }
+
+.settings-section { display: flex; flex-direction: column; gap: 0.5rem; }
+.settings-section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--openui-text-neutral-tertiary);
+}
+.settings-loading {
+  font-size: 0.78rem;
+  color: var(--openui-text-neutral-tertiary);
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.settings-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.settings-range {
+  flex: 1;
+  accent-color: var(--openui-interactive-accent-default);
+  cursor: pointer;
+  height: 4px;
+}
+.settings-range-value {
+  min-width: 3.5rem;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--openui-text-neutral-primary);
+}
+
+.settings-tools-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.settings-tool-chip {
+  padding: 0.3rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid var(--openui-border-default);
+}
+.settings-tool-chip.enabled {
+  background: color-mix(in oklch, var(--openui-interactive-accent-default) 15%, transparent);
+  border-color: var(--openui-interactive-accent-default);
+  color: var(--openui-text-neutral-primary);
+}
+.settings-tool-chip.disabled {
+  background: transparent;
+  color: var(--openui-text-neutral-tertiary);
+}
+.settings-tool-chip:hover { transform: translateY(-1px); }
+
+.settings-apply-btn {
+  width: 100%;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: var(--openui-radius-m);
+  background: var(--openui-interactive-accent-default);
+  color: var(--openui-text-on-accent, #fff);
+  font-family: var(--openui-font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px color-mix(in oklch, var(--openui-interactive-accent-default) 30%, transparent);
+}
+.settings-apply-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px color-mix(in oklch, var(--openui-interactive-accent-default) 35%, transparent);
+}
+
+/* ---- Thread toolbar (retry / stop) ---- */
+.thread-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.thread-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  font-family: var(--openui-font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-radius: var(--openui-radius-m);
+  border: 1px solid var(--openui-border-default);
+  background: color-mix(in oklch, var(--openui-foreground) 70%, transparent);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.thread-toolbar-btn.retry {
+  color: var(--openui-text-neutral-secondary);
+}
+.thread-toolbar-btn.retry:hover {
+  background: color-mix(in oklch, var(--openui-interactive-accent-default) 12%, transparent);
+  border-color: var(--openui-border-accent);
+  color: var(--openui-interactive-accent-default);
+}
+.thread-toolbar-btn.stop {
+  color: oklch(0.65 0.22 25);
+  border-color: oklch(0.65 0.22 25 / 0.4);
+  background: oklch(0.65 0.22 25 / 0.08);
+}
+.thread-toolbar-btn.stop:hover {
+  background: oklch(0.65 0.22 25 / 0.15);
+}

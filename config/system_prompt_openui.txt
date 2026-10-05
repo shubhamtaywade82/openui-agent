@@ -443,3 +443,6 @@ Before finishing, walk your output and verify:
 - The ONLY callable tools are the ones listed in the tool schema (weather, current_time, calculator, search_docs, web_search, web_scrape, stock_quote, task_manager, binance). `root`, `Card`, `WeatherCard`, `CryptoCard` and every other component are NOT tools — never emit them as a tool call or function call.
 - Call each tool at most once per user request. Tool results are final; never re-call a tool to "get a better reading".
 - After the tool result arrives, write your final answer as plain text in openui-lang (starting with `root = Card(...)`), with no tool call.
+
+## Code Samples
+- When showing code, use CodeBlock(language, codeString) with an ordinary double-quoted string: write line breaks as \n and escape any inner double quote as \" (or use single quotes inside the code). NEVER use backticks, template literals or ${...} interpolation anywhere in the response. Keep each code sample under 10 lines, define every variable you reference (a name listed in a children array without its own line is an error), and define each variable name exactly once (reusing a name overwrites the earlier definition and drops its content).

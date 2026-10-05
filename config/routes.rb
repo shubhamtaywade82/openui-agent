@@ -11,6 +11,10 @@ Rails.application.routes.draw do
   get "/api/openui/:id/status", to: "openui#status"
   get "/api/openui/:id/stream", to: "openui#stream_status"
 
+  get    "/api/models",    to: "openui#list_models"
+  match  "/api/models",    to: "openui#list_models", via: :options
+  delete "/api/chats/:id/messages/:message_id", to: "openui#destroy_message"
+  match  "/api/chats/:id/messages/:message_id", to: "openui#destroy_message", via: :options
   get    "/api/chats",     to: "openui#list_chats"
   post   "/api/chats",     to: "openui#create_chat"
   match  "/api/chats",     to: "openui#list_chats", via: :options

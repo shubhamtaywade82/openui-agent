@@ -7,7 +7,7 @@ class OpenuiController < ApplicationController
 
   skip_forgery_protection
   before_action :set_cors_headers
-  before_action :handle_preflight, only: %i[create create_chat show_chat destroy_chat list_chats]
+  before_action :handle_preflight, only: %i[create create_chat show_chat destroy_chat list_chats list_models destroy_message]
 
   def index
     @chats = Chat.order(created_at: :desc).limit(10)
@@ -20,9 +20,26 @@ class OpenuiController < ApplicationController
     if parsed[:async]
       run_async(parsed)
     else
-      runner = AgentRunner.new(chat_id: parsed[:chat_id], message: parsed[:message])
+      runner = AgentRunner.new(chat_id: parsed[:chat_id], message: parsed[:message], options: parsed[:options])
       stream_agent(runner, agui: parsed[:protocol] == "ag-ui")
     end
+  end
+
+  def list_models
+    ollama_models = RubyLLM.models.select { |m| m.respond_to?(:provider) && m.provider.to_s == "ollama" }
+    render json: { models: ollama_models.map { |m| { id: m.id, name: m.id } } }
+  rescue => e
+    Rails.logger.warn "list_models failed: #{e.message}"
+    render json: { models: [] }
+  end
+
+  def destroy_message
+    chat = Chat.find(params[:id])
+    message = chat.messages.find(params[:message_id])
+    message.destroy
+    head :no_content
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Not found" }, status: :not_found
   end
 
   def status
@@ -81,12 +98,18 @@ class OpenuiController < ApplicationController
       chat_id: body["chat_id"] || body["threadId"],
       message: messages.last.is_a?(Hash) ? messages.last["content"].to_s : "",
       async: ActiveModel::Type::Boolean.new.cast(body["async"]),
-      protocol: body["protocol"]
+      protocol: body["protocol"],
+      options: {
+        model: body.dig("options", "model").presence,
+        temperature: body.dig("options", "temperature"),
+        num_ctx: body.dig("options", "num_ctx"),
+        disabled_tools: body.dig("options", "disabled_tools")
+      }.compact
     }
   end
 
   def run_async(parsed)
-    runner = AgentRunner.new(chat_id: parsed[:chat_id], message: parsed[:message])
+    runner = AgentRunner.new(chat_id: parsed[:chat_id], message: parsed[:message], options: parsed[:options])
     agent = runner.find_or_create_agent
     AgentRunJob.perform_later(agent.id, parsed[:message])
 
