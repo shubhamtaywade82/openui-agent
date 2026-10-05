@@ -495,3 +495,50 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .thread-toolbar-btn.stop:hover {
   background: oklch(0.65 0.22 25 / 0.15);
 }
+
+/* ---- Sources: collapsed by default, one line per reference ---- */
+
+.gen-sources {
+  border-top: 1px solid var(--openui-border-default);
+  padding-top: var(--openui-space-s);
+  font-size: 0.875rem;
+}
+
+.gen-sources summary {
+  cursor: pointer;
+  color: var(--openui-text-neutral-secondary);
+  font-weight: 500;
+}
+
+.gen-sources summary:hover { color: var(--openui-text-neutral-primary); }
+
+.gen-sources ol {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gen-sources li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.gen-sources a,
+.gen-sources li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--openui-text-neutral-primary);
+}
+
+.gen-sources a:hover { color: var(--openui-text-brand); }
+
+.gen-sources small {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--openui-text-neutral-tertiary);
+}
