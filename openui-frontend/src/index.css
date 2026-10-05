@@ -4,6 +4,7 @@ body { font-family: var(--openui-font-body, system-ui, sans-serif); color: var(-
     radial-gradient(circle 800px at 70% -10%, color-mix(in oklch, var(--openui-interactive-accent-default) 10%, transparent), transparent 70%),
     radial-gradient(circle 600px at 20% 90%, color-mix(in oklch, var(--openui-interactive-accent-default) 6%, transparent), transparent 60%); }
 :focus-visible { outline: 2px solid var(--openui-border-accent); outline-offset: 2px; }
+input:focus-visible, textarea:focus-visible { outline: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
@@ -101,6 +102,12 @@ body { font-family: var(--openui-font-body, system-ui, sans-serif); color: var(-
 .openui-agent-thread-composer__input-wrapper:focus-within { border-color: var(--openui-border-accent); box-shadow:
     0 0 0 3px color-mix(in oklch, var(--openui-border-accent) 22%, transparent),
     0 12px 40px -4px color-mix(in oklch, var(--openui-border-accent) 15%, transparent); }
+.openui-agent-desktop-welcome-composer__input,
+.openui-agent-thread-composer__input { border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; color: var(--openui-text-neutral-primary) !important; }
+.openui-agent-desktop-welcome-composer__input:focus,
+.openui-agent-desktop-welcome-composer__input:focus-visible,
+.openui-agent-thread-composer__input:focus,
+.openui-agent-thread-composer__input:focus-visible { border: none !important; outline: none !important; box-shadow: none !important; }
 .openui-agent-desktop-welcome-composer__submit-button,
 .openui-agent-thread-composer__submit-button { border-radius: 50% !important; background: var(--openui-interactive-accent-default) !important; color: #fff !important; transition: transform 0.15s ease, background 0.15s ease !important; }
 .openui-agent-desktop-welcome-composer__submit-button:not(:disabled):hover,
