@@ -26,11 +26,7 @@ class OpenuiController < ApplicationController
   end
 
   def list_models
-    ollama_models = RubyLLM.models.select { |m| m.respond_to?(:provider) && m.provider.to_s == "ollama" }
-    render json: { models: ollama_models.map { |m| { id: m.id, name: m.id } } }
-  rescue => e
-    Rails.logger.warn "list_models failed: #{e.message}"
-    render json: { models: [] }
+    render json: { models: chat_model_names.map { |name| { id: name, name: name } }, default: ENV["OLLAMA_MODEL"] }
   end
 
   def destroy_message
@@ -143,6 +139,28 @@ class OpenuiController < ApplicationController
       messages_count: chat.messages.count,
       last_message: last_msg ? { role: last_msg.role, content: last_msg.content.to_s } : nil
     }
+  end
+
+  # Ask Ollama what is installed right now; the RubyLLM registry only knows models from its last refresh.
+  def chat_model_names
+    names = installed_ollama_models
+    names = registry_ollama_models if names.empty?
+    names.grep_v(/embed/i).sort
+  end
+
+  def installed_ollama_models
+    base = ENV.fetch("OLLAMA_API_BASE", "http://localhost:11434/v1").delete_suffix("/v1")
+    response = Net::HTTP.start(URI(base).host, URI(base).port, open_timeout: 2, read_timeout: 3) do |http|
+      http.get("/api/tags")
+    end
+    JSON.parse(response.body).fetch("models").map { |model| model["name"] }
+  rescue StandardError => e
+    Rails.logger.warn { "[OpenuiController] Ollama /api/tags failed (#{e.class}: #{e.message}); using model registry" }
+    []
+  end
+
+  def registry_ollama_models
+    RubyLLM.models.select { |model| model.provider.to_s == "ollama" }.map(&:id)
   end
 
   def chat_summary(chat)

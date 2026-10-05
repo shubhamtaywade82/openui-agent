@@ -10,6 +10,7 @@ import {
 import { myLibrary } from "./lib/my-library"
 import { darkTheme, lightTheme } from "./lib/theme"
 import { agentOptions } from "./lib/settings"
+import { ComposerModelPicker } from "./ModelPicker"
 import { SettingsPanel } from "./SettingsPanel"
 import { ThreadToolbar } from "./ThreadToolbar"
 
@@ -210,6 +211,7 @@ export default function App() {
             <ThreadToolbar />
           </div>
         </AgentInterface.ThreadHeader>
+        <ComposerModelPicker />
         <AgentInterface.Welcome
           glowAnimation={true} image={<HeroBadge />}
           starterVariant="short"

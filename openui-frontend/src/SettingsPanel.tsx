@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef } from "react"
 import { Settings, X, Cpu, Thermometer, Layers, ChevronDown } from "lucide-react"
 import { ModelSwitcher } from "@openuidev/react-ui"
-import { agentOptions, AVAILABLE_TOOLS, type AgentOptions } from "./lib/settings"
+import { AVAILABLE_TOOLS, agentOptions, updateAgentOptions, type AgentOptions } from "./lib/settings"
+import { useModels } from "./ModelPicker"
 
-const API_ROOT = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api"
-
-interface ModelEntry {
-  id: string
-  name: string
-}
+// Mirror ApplicationAgent: a smaller context would truncate the ~13k-token system prompt.
+const DEFAULT_TEMPERATURE = 0.3
+const DEFAULT_NUM_CTX = 32768
 
 interface Props {
   onSettingsChange?: (opts: AgentOptions) => void
@@ -16,21 +14,12 @@ interface Props {
 
 export function SettingsPanel({ onSettingsChange }: Props) {
   const [open, setOpen] = useState(false)
-  const [models, setModels] = useState<ModelEntry[]>([])
+  const { models, defaultModel } = useModels()
   const [selectedModel, setSelectedModel] = useState(agentOptions.model ?? "")
-  const [temperature, setTemperature] = useState(agentOptions.temperature ?? 0.7)
-  const [numCtx, setNumCtx] = useState(agentOptions.num_ctx ?? 4096)
+  const [temperature, setTemperature] = useState(agentOptions.temperature ?? DEFAULT_TEMPERATURE)
+  const [numCtx, setNumCtx] = useState(agentOptions.num_ctx ?? DEFAULT_NUM_CTX)
   const [disabledTools, setDisabledTools] = useState<string[]>(agentOptions.disabled_tools ?? [])
   const panelRef = useRef<HTMLDivElement>(null)
-
-  // Load models from backend on first open
-  useEffect(() => {
-    if (!open || models.length > 0) return
-    fetch(`${API_ROOT}/models`)
-      .then(r => r.json())
-      .then(data => setModels(data.models ?? []))
-      .catch(() => setModels([]))
-  }, [open])
 
   // Close on outside click
   useEffect(() => {
@@ -42,11 +31,24 @@ export function SettingsPanel({ onSettingsChange }: Props) {
     return () => document.removeEventListener("mousedown", handler)
   }, [open])
 
+  // Re-read the store on open: the composer picker may have changed the model since the last visit.
+  function togglePanel() {
+    if (!open) {
+      setSelectedModel(agentOptions.model ?? "")
+      setTemperature(agentOptions.temperature ?? DEFAULT_TEMPERATURE)
+      setNumCtx(agentOptions.num_ctx ?? DEFAULT_NUM_CTX)
+      setDisabledTools(agentOptions.disabled_tools ?? [])
+    }
+    setOpen(!open)
+  }
+
   function apply() {
-    agentOptions.model = selectedModel || undefined
-    agentOptions.temperature = temperature
-    agentOptions.num_ctx = numCtx
-    agentOptions.disabled_tools = disabledTools.length ? disabledTools : undefined
+    updateAgentOptions({
+      model: selectedModel || undefined,
+      temperature,
+      num_ctx: numCtx,
+      disabled_tools: disabledTools.length ? disabledTools : undefined,
+    })
     onSettingsChange?.({ ...agentOptions })
     setOpen(false)
   }
@@ -58,14 +60,14 @@ export function SettingsPanel({ onSettingsChange }: Props) {
   }
 
   const modelOptions = models.map(m => ({ id: m.id, name: m.name, group: "Local" }))
-  const activeModel = selectedModel || (models[0]?.id ?? "")
+  const activeModel = selectedModel || defaultModel || (models[0]?.id ?? "")
 
   return (
     <div className="settings-panel-root" ref={panelRef}>
       <button
         type="button"
         className="settings-trigger-btn"
-        onClick={() => setOpen(o => !o)}
+        onClick={togglePanel}
         aria-label="Open settings"
         title="Model & tool settings"
       >

@@ -546,3 +546,11 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   margin-left: auto;
   color: var(--openui-text-neutral-tertiary);
 }
+
+/* ---- Model picker inside the composer ---- */
+
+.composer-model-picker {
+  order: -1;
+  margin-right: var(--openui-space-s);
+  max-width: 14rem;
+}
