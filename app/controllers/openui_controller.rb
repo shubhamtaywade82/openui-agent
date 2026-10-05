@@ -31,6 +31,32 @@ class OpenuiController < ApplicationController
     response.stream.close if response.stream
   end
 
+  def list_chats
+    chats = Chat.order(created_at: :desc).limit(20).map do |c|
+      first_prompt = c.messages.find_by(role: "user")&.content&.truncate(40)
+      { id: c.id, title: first_prompt || "Chat ##{c.id}", created_at: c.created_at }
+    end
+    render json: chats
+  end
+
+  def show_chat
+    chat = Chat.find(params[:id])
+    messages = chat.messages.order(:created_at).map do |m|
+      { id: m.id, role: m.role, content: m.content, created_at: m.created_at }
+    end
+    render json: { id: chat.id, messages: messages }
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Chat not found" }, status: :not_found
+  end
+
+  def destroy_chat
+    chat = Chat.find(params[:id])
+    chat.destroy
+    head :no_content
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Chat not found" }, status: :not_found
+  end
+
   private
 
   def build_agent(chat_id)
@@ -50,6 +76,11 @@ class OpenuiController < ApplicationController
 
   def stream_agent_response(agent, user_content)
     agent.ask(user_content) do |chunk|
+      if chunk.tool_call?
+        name = chunk.tool_calls&.first&.dig(:name) || "tool"
+        response.stream.write("data: #{ { status: "Executing #{name}..." }.to_json }\n\n")
+      end
+
       next unless chunk.content.present?
       response.stream.write("data: #{sse_chunk(agent.model.to_s, chunk.content).to_json}\n\n")
     end

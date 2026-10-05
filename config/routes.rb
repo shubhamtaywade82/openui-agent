@@ -8,6 +8,10 @@ Rails.application.routes.draw do
   post  "/api/openui", to: "openui#create"
   match "/api/openui", to: "openui#create", via: :options
 
+  get    "/api/chats",     to: "openui#list_chats"
+  get    "/api/chats/:id", to: "openui#show_chat"
+  delete "/api/chats/:id", to: "openui#destroy_chat"
+
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check

@@ -32,12 +32,21 @@ function OpenuiChat({ endpoint }) {
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState(null)
   const [viewTab, setViewTab] = useState("preview")
+  const [toolStatus, setToolStatus] = useState(null)
   const chatIdRef = useRef(null)
+
+  const resetChat = () => {
+    chatIdRef.current = null
+    setCode(INITIAL_CODE)
+    setError(null)
+    setToolStatus(null)
+  }
 
   const handleStream = async (textToSend) => {
     if (!textToSend.trim() || streaming) return
     setStreaming(true)
     setError(null)
+    setToolStatus(null)
     setCode("")
 
     try {
@@ -74,7 +83,9 @@ function OpenuiChat({ endpoint }) {
           try {
             const parsed = JSON.parse(dataStr)
             if (parsed.chat_id) chatIdRef.current = parsed.chat_id
+            if (parsed.status) setToolStatus(parsed.status)
             if (parsed.choices?.[0]?.delta?.content) {
+              setToolStatus(null)
               accumulated += parsed.choices[0].delta.content
               setCode(cleanDsl(accumulated))
             }
@@ -87,6 +98,7 @@ function OpenuiChat({ endpoint }) {
       setError(err.message)
     } finally {
       setStreaming(false)
+      setToolStatus(null)
     }
   }
 
@@ -104,20 +116,34 @@ function OpenuiChat({ endpoint }) {
           <div className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" />
           <h1 className="text-lg font-bold tracking-tight">Generative UI Agent</h1>
           <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">ruby_llm + ollama</span>
+          {toolStatus && (
+            <span className="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded animate-pulse">
+              {toolStatus}
+            </span>
+          )}
         </div>
-        <div className="flex gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setViewTab("preview")}
-            className={`px-3 py-1 rounded transition ${viewTab === "preview" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}>
-            Preview
+            onClick={resetChat}
+            disabled={streaming}
+            className="text-xs px-2.5 py-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition border border-slate-800 disabled:opacity-50">
+            + New Chat
           </button>
-          <button
-            type="button"
-            onClick={() => setViewTab("code")}
-            className={`px-3 py-1 rounded transition ${viewTab === "code" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}>
-            OpenUI Code
-          </button>
+          <div className="flex gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+            <button
+              type="button"
+              onClick={() => setViewTab("preview")}
+              className={`px-3 py-1 rounded transition ${viewTab === "preview" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}>
+              Preview
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewTab("code")}
+              className={`px-3 py-1 rounded transition ${viewTab === "code" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-slate-200"}`}>
+              OpenUI Code
+            </button>
+          </div>
         </div>
       </header>
 
