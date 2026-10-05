@@ -7,7 +7,7 @@ class WeatherTool < RubyLLM::Tool
     {
       city: city.to_s.titleize,
       temperature: rand(6..34),
-      condition: ["Sunny", "Partly cloudy", "Cloudy", "Light rain", "Clear"].sample,
+      condition: [ "Sunny", "Partly cloudy", "Cloudy", "Light rain", "Clear" ].sample,
       humidity: rand(30..95),
       wind: "#{rand(4..28)} km/h",
       unit: "°C"

@@ -15,6 +15,7 @@ class OpenuiController < ApplicationController
     return render(json: { error: "messages must be non-empty" }, status: :bad_request) unless incoming.is_a?(Array) && incoming.any?
 
     agent = build_agent(payload["chat_id"])
+    replay_initial_history(agent, incoming) if payload["chat_id"].blank?
     setup_sse_headers
     response.stream.write("data: #{{ chat_id: agent.id }.to_json}\n\n")
 
@@ -61,6 +62,17 @@ class OpenuiController < ApplicationController
 
   def build_agent(chat_id)
     chat_id.present? ? UiAgent.find(chat_id) : UiAgent.create!
+  end
+
+  def replay_initial_history(agent, incoming)
+    incoming[0...-1].each do |msg|
+      next unless msg.is_a?(Hash)
+      role = msg["role"].to_s
+      content = msg["content"].to_s
+      next if content.blank? || !%w[user assistant].include?(role)
+
+      agent.add_message(role: role.to_sym, content: content)
+    end
   end
 
   def extract_user_content(incoming)
