@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { createLibrary, defineComponent } from "@openuidev/react-lang"
 import { openuiChatLibrary } from "@openuidev/react-ui/genui-lib"
-import { Card as ThemedCard, CardSourceProvider, useCardSourceContext } from "@openuidev/react-ui"
+import { getFaviconUrl, type CardSource } from "@openuidev/react-ui"
 import { z } from "zod"
 import {
   Sun, CloudSun, CloudRain, CloudSnow, Droplets, Wind, TrendingUp, TrendingDown, CheckCircle2, Circle, BookOpen, Activity, Radio
@@ -292,8 +292,7 @@ export const CryptoCard = defineComponent({
   component: CryptoCardComponent,
 })
 
-function CollapsibleSources() {
-  const sources = useCardSourceContext()
+function CollapsibleSources({ sources }: { sources?: CardSource[] }) {
   if (!sources?.length) return null
 
   return (
@@ -302,7 +301,7 @@ function CollapsibleSources() {
       <ol>
         {sources.map((source, index) => (
           <li key={source.url ?? index}>
-            <img src={source.faviconUrl} alt="" width={16} height={16} loading="lazy" />
+            {source.url && <img src={getFaviconUrl(source.url)} alt="" width={16} height={16} loading="lazy" />}
             {source.url ? (
               <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a>
             ) : (
@@ -316,19 +315,19 @@ function CollapsibleSources() {
   )
 }
 
-// Same props and prompt text as the stock chat Card; only the sources strip is swapped for a collapsible list.
+// The stock Card keeps inline [n] citations working (its source context is private to the genui bundle);
+// its built-in sources strip is hidden in index.css and replaced by the collapsible list below it.
 const stockCard = openuiChatLibrary.components.Card
+const StockCardView = stockCard.component
 const CardWithCollapsibleSources = defineComponent({
   name: stockCard.name,
   props: stockCard.props,
   description: stockCard.description,
-  component: ({ props, renderNode }) => (
-    <CardSourceProvider sources={props.sources}>
-      <ThemedCard width="full" style={{ display: "flex", flexDirection: "column", gap: "var(--openui-space-m)" }}>
-        {renderNode(props.children)}
-        <CollapsibleSources />
-      </ThemedCard>
-    </CardSourceProvider>
+  component: (args) => (
+    <>
+      <StockCardView {...args} />
+      <CollapsibleSources sources={args.props.sources} />
+    </>
   ),
 })
 

@@ -498,9 +498,13 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 
 /* ---- Sources: collapsed by default, one line per reference ---- */
 
+.openui-listed-sources { display: none; }
+
 .gen-sources {
-  border-top: 1px solid var(--openui-border-default);
-  padding-top: var(--openui-space-s);
+  margin-top: var(--openui-space-s);
+  padding: var(--openui-space-s) var(--openui-space-m);
+  border: 1px solid var(--openui-border-default);
+  border-radius: var(--openui-radius-l);
   font-size: 0.875rem;
 }
 
