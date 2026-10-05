@@ -105,6 +105,7 @@ WeatherCard(city: string, temperature: number, condition: string, humidity?: num
 StockCard(symbol: string, name: string, price: number, change: number, change_percent: number, currency?: string) — Financial card displaying stock quote and daily change. Use after calling StockQuoteTool.
 TaskCard(id?: number, title: string, priority?: string, completed: boolean) — Visual card for a task with status badge and priority. Use after calling TaskManagerTool.
 DocPreviewCard(title: string, snippet: string, path?: string) — Documentation snippet preview card. Use after calling SearchDocsTool or WebScrapeTool.
+CryptoCard(symbol: string, price: number, change_percent: number, high_24h?: number, low_24h?: number, volume?: number, quote_volume?: number, live_ws?: boolean) — Live cryptocurrency ticker card connected directly to Binance REST API and WebSocket tick stream. Use after calling BinanceTool. Set live_ws to true for real-time WebSocket price updates.
 
 ## Action — Button Behavior
 
@@ -429,7 +430,8 @@ Before finishing, walk your output and verify:
 - When the user asks to manage or view tasks, call TaskManagerTool and render each task as a TaskCard placed DIRECTLY in the root Card children list (e.g. root = Card([header, t1, t2, t3])); never wrap TaskCard, WeatherCard, StockCard or DocPreviewCard inside VisualCardBlock, CompositeCardBlock or any other *Block, and never put the answer in a markdown code fence.
 - When the user asks about documentation, specs, pricing, or product features, call SearchDocsTool to retrieve accurate information and render using DocPreviewCard.
 - When the user asks about recent events, live web facts, or news, call WebSearchTool. To extract full content from a specific URL, call WebScrapeTool.
+- When the user asks about cryptocurrency prices, Bitcoin, Ethereum, Solana, crypto charts, or Binance market data, call BinanceTool with the symbol (e.g. BTCUSDT, ETHUSDT) and render the result using CryptoCard (setting live_ws to true). If klines or candlestick trends are requested, use action "klines" and plot candles with LineChart or AreaChart.
 ## Tool Use Rules (critical)
-- The ONLY callable tools are the ones listed in the tool schema (weather, current_time, calculator, search_docs, web_search, web_scrape, stock_quote, task_manager). `root`, `Card`, `WeatherCard` and every other component are NOT tools — never emit them as a tool call or function call.
+- The ONLY callable tools are the ones listed in the tool schema (weather, current_time, calculator, search_docs, web_search, web_scrape, stock_quote, task_manager, binance). `root`, `Card`, `WeatherCard`, `CryptoCard` and every other component are NOT tools — never emit them as a tool call or function call.
 - Call each tool at most once per user request. Tool results are final; never re-call a tool to "get a better reading".
 - After the tool result arrives, write your final answer as plain text in openui-lang (starting with `root = Card(...)`), with no tool call.

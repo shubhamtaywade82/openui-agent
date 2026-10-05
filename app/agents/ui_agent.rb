@@ -5,5 +5,6 @@ class UiAgent < ApplicationAgent
   instructions { File.read(Rails.root.join("config/system_prompt_openui.txt")) }
 
   tools WeatherTool, CurrentTimeTool, CalculatorTool, SearchDocsTool,
-        WebSearchTool, WebScrapeTool, StockQuoteTool, TaskManagerTool
+        WebSearchTool, WebScrapeTool, StockQuoteTool, TaskManagerTool,
+        BinanceTool
 end

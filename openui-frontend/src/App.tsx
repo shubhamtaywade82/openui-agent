@@ -40,6 +40,11 @@ const STARTERS = [
     icon: <FileSearch size={16} />,
   },
   {
+    displayText: "Bitcoin live ticker",
+    prompt: "Show live Binance market data and real-time tick stream for BTCUSDT in a CryptoCard",
+    icon: <Sparkles size={16} />,
+  },
+  {
     displayText: "3 metric dashboard",
     prompt: "Show me a dashboard with revenue, users, and conversion rate",
     icon: <LayoutDashboard size={16} />,

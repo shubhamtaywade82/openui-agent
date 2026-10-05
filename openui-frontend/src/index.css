@@ -7,7 +7,20 @@ html, body, #root {
 body {
   font-family: var(--openui-font-body, system-ui, sans-serif);
   color: var(--openui-text-neutral-primary);
+  background: var(--openui-background);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.openui-app-root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background:
+    radial-gradient(circle 800px at 70% -10%, color-mix(in oklch, var(--openui-interactive-accent-default) 10%, transparent), transparent 70%),
+    radial-gradient(circle 600px at 20% 90%, color-mix(in oklch, var(--openui-interactive-accent-default) 6%, transparent), transparent 60%);
 }
 
 :focus-visible {
@@ -22,44 +35,109 @@ body {
   }
 }
 
-/* ---- Shell: quiet sidebar, roomy reading column ---- */
-
+/* ---- Sidebar: modern frosted rail ---- */
 .openui-agent-sidebar-container {
-  background: var(--openui-background);
+  background: color-mix(in oklch, var(--openui-background) 88%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid var(--openui-border-default);
 }
 
 .openui-agent-sidebar-header {
   font-family: var(--openui-font-heading);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+}
+
+.openui-agent-new-chat-button {
+  border-radius: var(--openui-radius-m);
+  border: 1px solid var(--openui-border-default);
+  background: color-mix(in oklch, var(--openui-foreground) 80%, transparent);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.openui-agent-new-chat-button:hover {
+  background: var(--openui-highlight);
+  border-color: var(--openui-border-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--openui-border-accent) 15%, transparent);
 }
 
 .openui-agent-thread-button {
   border-radius: var(--openui-radius-m);
   font-size: 0.875rem;
+  transition: all 0.15s ease;
+}
+
+.openui-agent-thread-button:hover {
+  background: var(--openui-highlight-subtle);
 }
 
 .openui-agent-thread-button--selected {
   background: var(--openui-highlight);
-  box-shadow: inset 2px 0 0 var(--openui-border-accent);
+  box-shadow: inset 3px 0 0 var(--openui-border-accent);
+  font-weight: 500;
 }
 
-/* ---- Welcome: the composer is the focal point ---- */
+/* ---- Welcome: Hero, glowing composer, card starters ---- */
+.welcome-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-hero-icon-container {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--openui-interactive-accent-default), oklch(0.6 0.24 300));
+  color: #fff;
+  box-shadow: 0 8px 24px color-mix(in oklch, var(--openui-interactive-accent-default) 35%, transparent);
+}
+
+.welcome-hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid var(--openui-border-default);
+  background: color-mix(in oklch, var(--openui-foreground) 70%, transparent);
+  backdrop-filter: blur(8px);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--openui-text-neutral-secondary);
+}
+
+.welcome-hero-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: oklch(0.7 0.2 145);
+  box-shadow: 0 0 8px oklch(0.7 0.2 145);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
 
 .openui-agent-welcome-screen__title {
   font-family: var(--openui-font-heading);
-  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
+  font-size: clamp(2rem, 3.6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .openui-agent-welcome-screen__description {
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.55;
-  max-width: 52ch;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  max-width: 54ch;
   color: var(--openui-text-neutral-secondary);
 }
 
@@ -67,167 +145,486 @@ body {
 .openui-agent-thread-composer__input-wrapper {
   border: 1px solid var(--openui-border-default);
   border-radius: var(--openui-radius-xl);
-  background: var(--openui-foreground);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  background: color-mix(in oklch, var(--openui-foreground) 90%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .openui-agent-desktop-welcome-composer:focus-within,
 .openui-agent-thread-composer__input-wrapper:focus-within {
   border-color: var(--openui-border-accent);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--openui-border-accent) 18%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in oklch, var(--openui-border-accent) 22%, transparent),
+    0 12px 40px -4px color-mix(in oklch, var(--openui-border-accent) 15%, transparent);
 }
 
-.openui-agent-desktop-welcome-composer__input:focus-visible,
-.openui-agent-thread-composer__input:focus-visible {
-  outline: none;
+.openui-agent-desktop-welcome-composer__submit-button,
+.openui-agent-thread-composer__submit-button {
+  border-radius: 50% !important;
+  transition: transform 0.15s ease, background 0.15s ease !important;
 }
 
-.theme-toggle {
-  position: fixed;
-  left: 12px;
-  bottom: 12px;
-  z-index: 1000;
-  padding: 0.375rem 0.75rem;
-  border: 1px solid var(--openui-border-default);
-  border-radius: var(--openui-radius-m);
-  background: var(--openui-foreground);
-  color: var(--openui-text-neutral-secondary);
-  font: inherit;
-  font-size: 0.8125rem;
-  cursor: pointer;
+.openui-agent-desktop-welcome-composer__submit-button:not(:disabled):hover,
+.openui-agent-thread-composer__submit-button:not(:disabled):hover {
+  transform: scale(1.08);
 }
 
-.theme-toggle:hover { color: var(--openui-text-neutral-primary); }
+.openui-agent-conversation-starter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  max-width: 680px;
+  width: 100%;
+}
 
 .openui-agent-conversation-starter-item-long {
   border-radius: var(--openui-radius-m);
-  transition: background 0.12s;
+  border: 1px solid var(--openui-border-default);
+  background: color-mix(in oklch, var(--openui-foreground) 75%, transparent);
+  backdrop-filter: blur(8px);
+  padding: 0.75rem 1rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .openui-agent-conversation-starter-item-long:hover {
-  background: var(--openui-highlight-subtle);
+  background: var(--openui-highlight);
+  border-color: var(--openui-border-interactive);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
 }
 
-/* ---- Generated cards: flat, themed, one radius ---- */
+.openui-agent-conversation-starter-item-long__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--openui-border-accent) 15%, transparent);
+  color: var(--openui-border-accent);
+}
 
+/* ---- User messages: refined bubble ---- */
+.openui-agent-thread-message-user__content {
+  border-radius: 18px 18px 4px 18px;
+  padding: 0.75rem 1.125rem;
+  background: var(--openui-chat-user-response-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* ---- Generated Cards: glassmorphic, elevated ---- */
 .gen-card {
-  --gen-edge: var(--openui-border-default);
+  position: relative;
+  overflow: hidden;
   box-sizing: border-box;
   width: 100%;
-  max-width: 360px;
-  padding: 1rem 1.125rem;
+  max-width: 400px;
+  padding: 1.25rem 1.35rem;
   border: 1px solid var(--openui-border-default);
-  border-left: 3px solid var(--gen-edge);
-  border-radius: var(--openui-radius-l);
-  background: var(--openui-foreground);
+  border-radius: var(--openui-radius-xl);
+  background: color-mix(in oklch, var(--openui-foreground) 90%, transparent);
+  backdrop-filter: blur(14px);
   color: var(--openui-text-neutral-primary);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gen-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.16);
+}
+
+.gen-card__glow-mesh {
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklch, var(--gen-glow, var(--openui-border-accent)) 25%, transparent), transparent 70%);
+  pointer-events: none;
 }
 
 .gen-card h4 {
   margin: 0;
   font-family: var(--openui-font-heading);
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
-
-.gen-card p { margin: 0; }
 
 .gen-card__head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
-.gen-card__head span,
-.gen-card__head code {
+/* Weather card */
+.gen-weather { --gen-glow: oklch(0.7 0.2 60); }
+
+.gen-weather__icon-badge {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: color-mix(in oklch, oklch(0.7 0.2 60) 18%, transparent);
+  color: oklch(0.75 0.18 60);
+}
+
+.gen-weather__condition-label {
   font-size: 0.8125rem;
-  color: var(--openui-text-neutral-tertiary);
+  color: var(--openui-text-neutral-secondary);
 }
 
-.gen-card__facts {
+.gen-weather__body {
   display: flex;
-  gap: 1.5rem;
-  margin: 0.75rem 0 0;
-  font-size: 0.8125rem;
+  align-items: baseline;
+  margin: 0.25rem 0 0.75rem;
 }
-
-.gen-card__facts dt { color: var(--openui-text-neutral-tertiary); }
-.gen-card__facts dd { margin: 0.125rem 0 0; font-weight: 600; }
-
-.gen-weather { --gen-edge: var(--openui-border-accent); }
 
 .gen-weather__temp {
   font-family: var(--openui-font-heading);
-  font-size: 2.75rem;
-  font-weight: 700;
+  font-size: 3rem;
+  font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
 }
 
-.gen-stock--up { --gen-edge: oklch(0.62 0.14 150); }
-.gen-stock--down { --gen-edge: oklch(0.6 0.17 25); }
+.gen-weather__unit {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--openui-text-neutral-tertiary);
+  margin-left: 2px;
+}
 
-.gen-stock__price {
+.gen-weather__facts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--openui-border-default);
+}
+
+.gen-weather__fact-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.gen-weather__fact-tile span { color: var(--openui-text-neutral-tertiary); }
+.gen-weather__fact-tile strong { font-weight: 600; margin-left: auto; }
+
+/* Stock card */
+.gen-stock--up { --gen-glow: oklch(0.65 0.18 150); }
+.gen-stock--down { --gen-glow: oklch(0.6 0.2 25); }
+
+.gen-stock__ticker-badge {
   font-family: var(--openui-font-heading);
-  font-size: 2rem;
+  font-weight: 800;
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+}
+
+.gen-stock__company-name {
+  font-size: 0.8125rem;
+  color: var(--openui-text-neutral-secondary);
+}
+
+.gen-stock__trend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
   font-weight: 700;
+}
+
+.gen-stock__trend-pill--up {
+  background: color-mix(in oklch, oklch(0.65 0.18 150) 18%, transparent);
+  color: oklch(0.62 0.18 150);
+}
+
+.gen-stock__trend-pill--down {
+  background: color-mix(in oklch, oklch(0.6 0.2 25) 18%, transparent);
+  color: oklch(0.65 0.2 25);
+}
+
+.gen-stock__price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.gen-stock__currency {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--openui-text-neutral-secondary);
+}
+
+.gen-stock__price-val {
+  font-family: var(--openui-font-heading);
+  font-size: 2.25rem;
+  font-weight: 800;
   letter-spacing: -0.02em;
 }
 
-.gen-stock__price small {
-  margin-right: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+.gen-stock__diff-label {
+  font-size: 0.8125rem;
   color: var(--openui-text-neutral-tertiary);
 }
 
-.gen-stock__change { margin-top: 0.25rem; font-size: 0.875rem; font-weight: 600; }
-.gen-stock--up .gen-stock__change { color: oklch(0.55 0.14 150); }
-.gen-stock--down .gen-stock__change { color: oklch(0.58 0.17 25); }
-
+/* Task card */
 .gen-task {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: flex-start;
+  gap: 0.85rem;
 }
 
-.gen-task--hot { --gen-edge: oklch(0.6 0.17 25); }
-.gen-task--calm { --gen-edge: var(--openui-border-interactive); }
-
-.gen-task__check {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 1.5px solid var(--openui-border-interactive);
-  border-radius: 50%;
-  font-size: 0.75rem;
-  color: var(--openui-background);
+.gen-task__check-icon {
+  margin-top: 2px;
+  color: var(--openui-text-neutral-tertiary);
+  cursor: pointer;
+  transition: color 0.15s ease;
 }
 
-.gen-task.is-done .gen-task__check {
-  background: var(--openui-interactive-accent-default);
-  border-color: var(--openui-interactive-accent-default);
+.gen-task.is-done .gen-task__check-icon {
+  color: oklch(0.65 0.18 150);
 }
 
-.gen-task.is-done h4 {
+.gen-task.is-done .gen-task__title {
   text-decoration: line-through;
   color: var(--openui-text-neutral-tertiary);
 }
 
-.gen-task__priority {
-  font-size: 0.8125rem;
-  color: var(--openui-text-neutral-secondary);
-  text-transform: capitalize;
+.gen-task__body { flex: 1; }
+
+.gen-task__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
-.gen-doc { --gen-edge: var(--openui-border-accent); max-width: 440px; }
+.gen-task__id-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--openui-text-neutral-tertiary);
+}
 
-.gen-doc p {
+.gen-task__priority-badge {
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.gen-task__priority--urgent, .gen-task__priority--high {
+  background: color-mix(in oklch, oklch(0.6 0.2 25) 20%, transparent);
+  color: oklch(0.65 0.2 25);
+}
+
+.gen-task__priority--medium, .gen-task__priority--low {
+  background: color-mix(in oklch, var(--openui-border-accent) 20%, transparent);
+  color: var(--openui-border-accent);
+}
+
+/* Doc card */
+.gen-doc__title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gen-doc__icon { color: var(--openui-border-accent); }
+
+.gen-doc__path-badge {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: color-mix(in oklch, var(--openui-foreground) 80%, transparent);
+  border: 1px solid var(--openui-border-default);
+  font-size: 0.75rem;
+}
+
+.gen-doc__snippet {
+  margin: 0;
   font-size: 0.875rem;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--openui-text-neutral-secondary);
+}
+
+/* ---- Floating Theme Toggle ---- */
+.theme-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--openui-border-default);
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--openui-foreground) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--openui-text-neutral-secondary);
+  font-family: var(--openui-font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.theme-toggle:hover {
+  color: var(--openui-text-neutral-primary);
+  border-color: var(--openui-border-interactive);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.theme-toggle-icon {
+  display: grid;
+  place-items: center;
+}
+
+/* ---- Live Binance CryptoCard ---- */
+.gen-crypto {
+  border-left: 3px solid oklch(0.68 0.18 50);
+  transition: all 0.25s ease;
+}
+
+.gen-crypto--flash-up {
+  border-color: oklch(0.68 0.18 145);
+  box-shadow: 0 0 20px -2px oklch(0.68 0.18 145 / 0.45);
+}
+
+.gen-crypto--flash-down {
+  border-color: oklch(0.62 0.22 28);
+  box-shadow: 0 0 20px -2px oklch(0.62 0.22 28 / 0.45);
+}
+
+.gen-crypto__ticker-badge {
+  font-family: var(--openui-font-heading);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--openui-text-neutral-primary);
+  display: block;
+}
+
+.gen-crypto__pair-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--openui-text-neutral-tertiary);
+  text-transform: uppercase;
+}
+
+.gen-crypto__status-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gen-crypto__ws-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--openui-foreground) 80%, transparent);
+  border: 1px solid var(--openui-border-default);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--openui-text-neutral-tertiary);
+}
+
+.gen-crypto__ws-pill.is-connected {
+  border-color: oklch(0.68 0.18 145 / 0.4);
+  background: oklch(0.68 0.18 145 / 0.12);
+  color: oklch(0.68 0.18 145);
+}
+
+.gen-crypto__pulse-icon {
+  animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.gen-crypto__main {
+  margin: 0.75rem 0;
+}
+
+.gen-crypto__price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.gen-crypto__currency {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--openui-text-neutral-tertiary);
+}
+
+.gen-crypto__price-val {
+  font-family: var(--openui-font-heading);
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--openui-text-neutral-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.gen-crypto__tick-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--openui-text-neutral-tertiary);
+}
+
+.gen-crypto__facts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--openui-border-default);
+}
+
+.gen-crypto__fact-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.gen-crypto__fact-label {
+  font-size: 0.72rem;
+  color: var(--openui-text-neutral-tertiary);
+  font-weight: 500;
+}
+
+.gen-crypto__fact-tile strong {
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--openui-text-neutral-primary);
 }

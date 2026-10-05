@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react"
 import { createLibrary, defineComponent } from "@openuidev/react-lang"
 import { openuiChatLibrary } from "@openuidev/react-ui/genui-lib"
 import { z } from "zod"
@@ -13,6 +14,8 @@ import {
   CheckCircle2,
   Circle,
   BookOpen,
+  Activity,
+  Radio,
 } from "lucide-react"
 
 interface WeatherCardProps {
@@ -194,6 +197,165 @@ export const DocPreviewCard = defineComponent({
   ),
 })
 
+interface CryptoCardProps {
+  symbol: string
+  price: number
+  change_percent: number
+  high_24h?: number
+  low_24h?: number
+  volume?: number
+  quote_volume?: number
+  live_ws?: boolean
+}
+
+export const CryptoCard = defineComponent({
+  name: "CryptoCard",
+  description: "Live cryptocurrency market card connected to Binance REST and live WebSocket tick stream.",
+  props: z.object({
+    symbol: z.string().describe("Trading pair, e.g. BTCUSDT, ETHUSDT, SOLUSDT"),
+    price: z.number().describe("Latest price in quote currency"),
+    change_percent: z.number().describe("24h price change percentage"),
+    high_24h: z.number().optional().describe("24h highest price"),
+    low_24h: z.number().optional().describe("24h lowest price"),
+    volume: z.number().optional().describe("24h base asset volume"),
+    quote_volume: z.number().optional().describe("24h quote volume in USDT"),
+    live_ws: z.boolean().optional().describe("Connect to live Binance WebSocket (defaults to true)"),
+  }),
+  component: ({ props }: { props: CryptoCardProps }) => {
+    const [livePrice, setLivePrice] = useState<number>(props.price)
+    const [liveChange, setLiveChange] = useState<number>(props.change_percent)
+    const [flash, setFlash] = useState<"up" | "down" | null>(null)
+    const [isConnected, setIsConnected] = useState<boolean>(false)
+    const [lastTickTime, setLastTickTime] = useState<string>("")
+    const prevPriceRef = useRef<number>(props.price)
+
+    const enableWs = props.live_ws !== false
+    const sym = props.symbol.toLowerCase()
+
+    useEffect(() => {
+      if (!enableWs) return
+
+      let ws: WebSocket | null = null
+      let isUnmounted = false
+
+      try {
+        // Binance public WebSocket 24hr ticker stream
+        ws = new WebSocket(`wss://stream.binance.com:9443/ws/${sym}@ticker`)
+
+        ws.onopen = () => {
+          if (!isUnmounted) setIsConnected(true)
+        }
+
+        ws.onmessage = (event) => {
+          if (isUnmounted) return
+          try {
+            const data = JSON.parse(event.data)
+            if (data && data.c) {
+              const newPrice = parseFloat(data.c)
+              const newPercent = parseFloat(data.P)
+
+              if (!isNaN(newPrice)) {
+                if (newPrice > prevPriceRef.current) setFlash("up")
+                else if (newPrice < prevPriceRef.current) setFlash("down")
+
+                prevPriceRef.current = newPrice
+                setLivePrice(newPrice)
+                if (!isNaN(newPercent)) setLiveChange(newPercent)
+                setLastTickTime(new Date().toLocaleTimeString())
+
+                setTimeout(() => {
+                  if (!isUnmounted) setFlash(null)
+                }, 350)
+              }
+            }
+          } catch {
+            // Ignore malformed tick packet
+          }
+        }
+
+        ws.onerror = () => {
+          if (!isUnmounted) setIsConnected(false)
+        }
+
+        ws.onclose = () => {
+          if (!isUnmounted) setIsConnected(false)
+        }
+      } catch {
+        setIsConnected(false)
+      }
+
+      return () => {
+        isUnmounted = true
+        if (ws) ws.close()
+      }
+    }, [sym, enableWs])
+
+    const isUp = liveChange >= 0
+    const sign = isUp ? "+" : ""
+
+    return (
+      <article className={`gen-card gen-crypto ${flash ? `gen-crypto--flash-${flash}` : ""}`}>
+        <div className="gen-card__glow-mesh" aria-hidden="true" />
+        <header className="gen-card__head">
+          <div>
+            <span className="gen-crypto__ticker-badge">{props.symbol}</span>
+            <span className="gen-crypto__pair-name">Binance Spot</span>
+          </div>
+          <div className="gen-crypto__status-badges">
+            {enableWs && (
+              <span className={`gen-crypto__ws-pill ${isConnected ? "is-connected" : ""}`}>
+                <Radio size={10} className="gen-crypto__pulse-icon" />
+                {isConnected ? "LIVE WS" : "CONNECTING"}
+              </span>
+            )}
+            <span className={`gen-stock__trend-pill gen-stock__trend-pill--${isUp ? "up" : "down"}`}>
+              {isUp ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+              {sign}{liveChange.toFixed(2)}%
+            </span>
+          </div>
+        </header>
+
+        <div className="gen-crypto__main">
+          <div className="gen-crypto__price-row">
+            <span className="gen-crypto__currency">$</span>
+            <span className="gen-crypto__price-val">
+              {livePrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+            </span>
+          </div>
+          {lastTickTime && (
+            <span className="gen-crypto__tick-time">
+              <Activity size={10} /> Last tick: {lastTickTime}
+            </span>
+          )}
+        </div>
+
+        {(props.high_24h || props.low_24h || props.volume) && (
+          <div className="gen-crypto__facts-grid">
+            {props.high_24h && (
+              <div className="gen-crypto__fact-tile">
+                <span className="gen-crypto__fact-label">24h High</span>
+                <strong>${props.high_24h.toLocaleString()}</strong>
+              </div>
+            )}
+            {props.low_24h && (
+              <div className="gen-crypto__fact-tile">
+                <span className="gen-crypto__fact-label">24h Low</span>
+                <strong>${props.low_24h.toLocaleString()}</strong>
+              </div>
+            )}
+            {props.volume && (
+              <div className="gen-crypto__fact-tile">
+                <span className="gen-crypto__fact-label">24h Volume</span>
+                <strong>{props.volume.toLocaleString()}</strong>
+              </div>
+            )}
+          </div>
+        )}
+      </article>
+    )
+  },
+})
+
 export const myLibrary = createLibrary({
   root: openuiChatLibrary.root ?? "Card",
   components: [
@@ -202,5 +364,6 @@ export const myLibrary = createLibrary({
     StockCard,
     TaskCard,
     DocPreviewCard,
+    CryptoCard,
   ],
 })
