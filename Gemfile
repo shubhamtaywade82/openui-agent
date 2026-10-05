@@ -58,3 +58,9 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
+
+gem "ruby_llm", "~> 1.16"
+
+gem "dotenv-rails", "~> 3.2"
+
+gem "neighbor", "~> 1.2"
