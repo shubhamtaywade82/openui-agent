@@ -6,7 +6,8 @@
   },
   "scripts": {
     "build": "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets",
-    "build:css": "bunx @tailwindcss/cli -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify"
+    "build:css": "bunx @tailwindcss/cli -i ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css --minify",
+    "prompt:generate": "bun -e 'const fs=require(\"fs\"); const {openuiChatLibrary}=require(\"@openuidev/react-ui/genui-lib\"); const {openuiChatPromptOptions}=require(\"@openuidev/react-ui\"); const {generateSystemPrompt}=require(\"@openuidev/react-lang\"); fs.writeFileSync(\"config/system_prompt_openui.txt\", generateSystemPrompt(openuiChatLibrary, openuiChatPromptOptions)); console.log(\"Generated config/system_prompt_openui.txt\");'"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
