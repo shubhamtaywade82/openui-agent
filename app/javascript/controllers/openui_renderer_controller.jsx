@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import React, { useState, useRef } from "react"
 import { createRoot } from "react-dom/client"
 import { Renderer } from "@openuidev/react-lang"
-import { openuiLibrary } from "@openuidev/react-ui"
+import { myLibrary } from "../../../openui-frontend/src/lib/my-library"
 
 // Removes reasoning tags and code fence artifacts produced by local models
 function cleanDsl(raw) {
@@ -20,11 +20,9 @@ const SAMPLE_PROMPTS = [
 ]
 
 const INITIAL_CODE = `
-header = InlineHeader("Generative UI Ready", 2)
-desc = Text("Ask for dashboards, cards, metrics, or forms to generate interactive UI in real time.")
-card = Card([header, desc])
-root = Stack([card])
-`.trim()
+header = CardHeader("Generative UI Ready")
+desc = TextContent("Ask for dashboards, cards, metrics, or forms to generate interactive UI in real time.")
+root = Card([header, desc])`.trim()
 
 function OpenuiChat({ endpoint }) {
   const [prompt, setPrompt] = useState("")
@@ -156,7 +154,7 @@ function OpenuiChat({ endpoint }) {
 
         {viewTab === "preview" ? (
           <div className="min-h-[400px] p-4 bg-white text-slate-900 rounded-xl shadow-inner overflow-x-auto">
-            <Renderer response={code} library={openuiLibrary} isStreaming={streaming} />
+            <Renderer response={code} library={myLibrary} isStreaming={streaming} />
           </div>
         ) : (
           <pre className="p-4 bg-slate-950 text-emerald-400 rounded-xl font-mono text-xs overflow-x-auto border border-slate-800 whitespace-pre-wrap leading-relaxed">
