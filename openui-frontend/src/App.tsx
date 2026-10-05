@@ -1,15 +1,11 @@
-import { useEffect, useMemo, useRef } from "react"
-import {
-  AgentInterface,
-  fetchLLM,
-  openAIAdapter,
-  openAIMessageFormat,
-} from "@openuidev/react-ui"
+import { useEffect } from "react"
+import { AgentInterface, openAIAdapter, openAIMessageFormat } from "@openuidev/react-ui"
+import { fetchLLM, type ChatStorage, type Thread } from "@openuidev/react-headless"
 import { observability } from "@openuidev/observability"
 import { OpenUIDevtools } from "@openuidev/devtools"
 import { myLibrary } from "./lib/my-library"
 
-const API_URL = "http://localhost:3000/api/openui"
+const API_ROOT = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api"
 
 const STARTERS = [
   { displayText: "Weather in Tokyo", prompt: "What's the weather in Tokyo and show it in a nice card?" },
@@ -19,69 +15,73 @@ const STARTERS = [
   { displayText: "3 metric dashboard", prompt: "Show me a dashboard with revenue, users, and conversion rate" },
 ]
 
-function useChatStreamLlm(chatIdRef: React.MutableRefObject<number | null>) {
-  return useMemo(() => {
-    const decoder = new TextDecoder()
+const TITLE_MAX_CHARS = 40
 
-    const customFetch = async (url: RequestInfo | URL, init?: RequestInit) => {
-      if (init?.body && typeof init.body === "string") {
-        try {
-          const parsed = JSON.parse(init.body)
-          if (chatIdRef.current) parsed.chat_id = chatIdRef.current
-          init.body = JSON.stringify(parsed)
-        } catch {
-          // Keep body unchanged if parsing fails
-        }
-      }
+interface ChatSummary {
+  id: string
+  title: string
+  created_at: string
+}
 
-      const res = await fetch(url, init)
-      if (!res.body) return res
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_ROOT}${path}`, init)
+  if (!res.ok) throw new Error(`${init?.method ?? "GET"} ${path} failed: HTTP ${res.status}`)
+  return res.status === 204 ? (undefined as T) : res.json()
+}
 
-      // Transparently intercept the SSE stream to extract chat_id
-      const transform = new TransformStream<Uint8Array, Uint8Array>({
-        transform(chunk, controller) {
-          const text = decoder.decode(chunk, { stream: true })
-          const match = text.match(/"chat_id":\s*(\d+)/)
-          if (match) chatIdRef.current = Number(match[1])
-          controller.enqueue(chunk)
-        },
-      })
+const toThread = (chat: ChatSummary): Thread => ({
+  id: chat.id,
+  title: chat.title,
+  createdAt: chat.created_at,
+})
 
-      return new Response(res.body.pipeThrough(transform), res)
-    }
+// The Rails chat id doubles as the thread id, so `fetchLLM` sends it as `threadId` and the
+// backend resumes the right conversation.
+const storage: ChatStorage = {
+  thread: {
+    listThreads: async () => ({ threads: (await request<ChatSummary[]>("/chats")).map(toThread) }),
+    createThread: async (firstMessage) => {
+      const chat = await request<ChatSummary>("/chats", { method: "POST" })
+      const prompt = typeof firstMessage.content === "string" ? firstMessage.content : ""
+      return toThread({ ...chat, title: prompt.slice(0, TITLE_MAX_CHARS) || chat.title })
+    },
+    getMessages: async (threadId) => (await request<{ messages: never[] }>(`/chats/${threadId}`)).messages,
+    updateThread: async (thread) => thread,
+    deleteThread: (threadId) => request<void>(`/chats/${threadId}`, { method: "DELETE" }),
+  },
+}
 
-    return fetchLLM({
-      url: API_URL,
-      streamAdapter: openAIAdapter(),
-      messageFormat: openAIMessageFormat,
-      fetch: customFetch,
-    })
-  }, [chatIdRef])
+const llm = fetchLLM({
+  url: `${API_ROOT}/openui`,
+  streamAdapter: openAIAdapter(),
+  messageFormat: openAIMessageFormat,
+})
+
+function logOpenUiEvents() {
+  return observability.listenAll(({ level, detail, timestamp }) => {
+    const log = level === "error" ? console.error : level === "warning" ? console.warn : console.info
+    log(`[OpenUI ${level.toUpperCase()}] ${new Date(timestamp).toLocaleTimeString()}`, detail)
+  })
 }
 
 export default function App() {
-  const chatIdRef = useRef<number | null>(null)
-  const llm = useChatStreamLlm(chatIdRef)
-
-  useEffect(() => {
-    // Listen to all OpenUI observability events (syntax errors, render events, warnings)
-    const remove = observability.listenAll((event) => {
-      const { level, detail, timestamp } = event
-      const log = level === "error" ? console.error : level === "warning" ? console.warn : console.info
-      log(`[OpenUI ${level.toUpperCase()}] ${new Date(timestamp).toLocaleTimeString()}`, detail)
-    })
-    return remove
-  }, [])
+  useEffect(logOpenUiEvents, [])
 
   return (
     <div style={{ height: "100vh", width: "100vw", display: "flex", flexDirection: "column" }}>
       <AgentInterface
         llm={llm}
+        storage={storage}
         componentLibrary={myLibrary}
         agentName="Local OpenUI + Ollama"
         theme={{ mode: "light" }}
-        starters={STARTERS}
-      />
+      >
+        <AgentInterface.Welcome
+          title="What can I build for you?"
+          description="Ask about weather, stocks, tasks or docs, or request a dashboard, form or chart. Answers render as live UI."
+          starters={STARTERS}
+        />
+      </AgentInterface>
       <OpenUIDevtools position="bottom-right" />
     </div>
   )

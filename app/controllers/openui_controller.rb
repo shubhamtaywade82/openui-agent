@@ -7,7 +7,7 @@ class OpenuiController < ApplicationController
 
   skip_forgery_protection
   before_action :set_cors_headers
-  before_action :handle_preflight, only: :create
+  before_action :handle_preflight, only: %i[create create_chat show_chat destroy_chat list_chats]
 
   def index
     @chats = Chat.order(created_at: :desc).limit(10)
@@ -45,18 +45,18 @@ class OpenuiController < ApplicationController
   end
 
   def list_chats
-    chats = Chat.order(created_at: :desc).limit(20).map do |c|
-      first_prompt = c.messages.find_by(role: "user")&.content&.truncate(40)
-      { id: c.id, title: first_prompt || "Chat ##{c.id}", created_at: c.created_at }
-    end
-    render json: chats
+    chats = Chat.joins(:messages).where(messages: { role: "user" }).distinct.order(created_at: :desc).limit(50)
+    render json: chats.map { |c| chat_summary(c) }
+  end
+
+  def create_chat
+    render json: chat_summary(Chat.create!), status: :created
   end
 
   def show_chat
     chat = Chat.find(params[:id])
-    messages = chat.messages.order(:created_at).map do |m|
-      { id: m.id, role: m.role, content: m.content, created_at: m.created_at }
-    end
+    visible = chat.messages.where(role: %w[user assistant]).where.not(content: [ nil, "" ]).order(:id)
+    messages = visible.map { |m| { id: m.id.to_s, role: m.role, content: m.content } }
     render json: { id: chat.id, messages: messages }
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Chat not found" }, status: :not_found
@@ -78,7 +78,7 @@ class OpenuiController < ApplicationController
     return { error: "messages must be a non-empty array" } unless messages.is_a?(Array) && messages.any?
 
     {
-      chat_id: body["chat_id"],
+      chat_id: body["chat_id"] || body["threadId"],
       message: messages.last.is_a?(Hash) ? messages.last["content"].to_s : "",
       async: ActiveModel::Type::Boolean.new.cast(body["async"])
     }
@@ -119,6 +119,11 @@ class OpenuiController < ApplicationController
       messages_count: chat.messages.count,
       last_message: last_msg ? { role: last_msg.role, content: last_msg.content.to_s } : nil
     }
+  end
+
+  def chat_summary(chat)
+    first_prompt = chat.messages.find_by(role: "user")&.content
+    { id: chat.id.to_s, title: first_prompt&.truncate(40) || "New chat", created_at: chat.created_at }
   end
 
   def render_bad_request(message)
