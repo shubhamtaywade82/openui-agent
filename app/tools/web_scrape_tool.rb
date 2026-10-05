@@ -2,14 +2,14 @@ require "net/http"
 require "uri"
 require "nokogiri"
 
-class WebScrapeTool < RubyLLM::Tool
+class WebScrapeTool < ApplicationTool
   description "Fetch and extract web content. Prefers clean LLM-friendly Markdown when available."
 
   param :url, type: :string, desc: "Full URL starting with http:// or https://"
 
   def execute(url:)
     uri = URI.parse(url.to_s.strip) rescue nil
-    return { error: "Invalid URL. Must begin with http:// or https://" } unless valid_http_uri?(uri)
+    return error_result("Invalid URL. Must begin with http:// or https://") unless valid_http_uri?(uri)
 
     markdown = try_markdown_variants(uri)
     if markdown.present?
@@ -22,8 +22,8 @@ class WebScrapeTool < RubyLLM::Tool
     end
 
     extract_html_content(uri, url)
-  rescue => e
-    { error: "Scraping failed: #{e.message}" }
+  rescue StandardError => e
+    error_result("Scraping failed: #{e.message}")
   end
 
   private

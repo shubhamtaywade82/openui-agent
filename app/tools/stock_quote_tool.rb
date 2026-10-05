@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class StockQuoteTool < RubyLLM::Tool
+class StockQuoteTool < ApplicationTool
   description "Fetch current stock market quote, price, daily change, and volume for a symbol."
 
   param :symbol, type: :string, desc: "Stock ticker symbol (e.g. AAPL, MSFT, GOOGL, NVDA, TSLA)"

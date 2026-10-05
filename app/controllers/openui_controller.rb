@@ -1,5 +1,9 @@
+# frozen_string_literal: true
+
+# Controller handling OpenUI SSE streaming, background agent execution, and chat persistence
 class OpenuiController < ApplicationController
   include ActionController::Live
+  include SseStreaming
 
   skip_forgery_protection
   before_action :set_cors_headers
@@ -10,26 +14,34 @@ class OpenuiController < ApplicationController
   end
 
   def create
-    payload = JSON.parse(request.body.read) rescue {}
-    incoming = payload["messages"] || []
-    return render(json: { error: "messages must be non-empty" }, status: :bad_request) unless incoming.is_a?(Array) && incoming.any?
+    parsed = parse_request
+    return render_bad_request(parsed[:error]) if parsed[:error]
 
-    agent = build_agent(payload["chat_id"])
-    replay_initial_history(agent, incoming) if payload["chat_id"].blank?
+    if parsed[:async]
+      run_async(parsed)
+    else
+      runner = AgentRunner.new(chat_id: parsed[:chat_id], message: parsed[:message])
+      stream_agent(runner)
+    end
+  end
+
+  def status
+    chat = Chat.find(params[:id])
+    render json: format_status_payload(chat)
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "Chat not found" }, status: :not_found
+  end
+
+  def stream_status
+    chat = Chat.find(params[:id])
     setup_sse_headers
-    response.stream.write("data: #{{ chat_id: agent.id }.to_json}\n\n")
-
-    stream_agent_response(agent, extract_user_content(incoming))
-    response.stream.write("data: [DONE]\n\n")
+    stream_chat_status(chat)
   rescue ActiveRecord::RecordNotFound
     render json: { error: "Chat not found" }, status: :not_found
   rescue IOError, Errno::EPIPE, ActionController::Live::ClientDisconnected
-    # Client aborted streaming connection
-  rescue => e
-    Rails.logger.error("[OpenUI] #{e.class}: #{e.message}")
-    response.stream.write("data: #{{ error: e.message }.to_json}\n\n") rescue nil
+    # Client disconnected — terminate stream gracefully
   ensure
-    response.stream.close if response.stream
+    sse.close
   end
 
   def list_chats
@@ -60,67 +72,64 @@ class OpenuiController < ApplicationController
 
   private
 
-  def build_agent(chat_id)
-    chat_id.present? ? UiAgent.find(chat_id) : UiAgent.create!
-  end
+  def parse_request
+    body = JSON.parse(request.body.read) rescue {}
+    messages = body["messages"]
+    return { error: "messages must be a non-empty array" } unless messages.is_a?(Array) && messages.any?
 
-  def replay_initial_history(agent, incoming)
-    incoming[0...-1].each do |msg|
-      next unless msg.is_a?(Hash)
-      role = msg["role"].to_s
-      content = msg["content"].to_s
-      next if content.blank? || !%w[user assistant].include?(role)
-
-      agent.add_message(role: role.to_sym, content: content)
-    end
-  end
-
-  def extract_user_content(incoming)
-    last_msg = incoming.last
-    last_msg.is_a?(Hash) ? last_msg["content"].to_s : ""
-  end
-
-  def setup_sse_headers
-    response.headers["Content-Type"]      = "text/event-stream"
-    response.headers["Cache-Control"]     = "no-cache"
-    response.headers["X-Accel-Buffering"] = "no"
-  end
-
-  def stream_agent_response(agent, user_content)
-    agent.ask(user_content) do |chunk|
-      if chunk.tool_call?
-        name = extract_tool_name(chunk)
-        response.stream.write("data: #{ { status: "Executing #{name}..." }.to_json }\n\n")
-      end
-
-      next unless chunk.content.present?
-
-      response.stream.write("data: #{sse_chunk(agent.model.to_s, chunk.content).to_json}\n\n")
-    end
-  end
-
-  def extract_tool_name(chunk)
-    first_call = chunk.tool_calls&.first
-    return "tool" unless first_call
-
-    first_call.respond_to?(:name) ? first_call.name : "tool"
-  end
-
-  def sse_chunk(model, content)
     {
-      id: "chatcmpl-#{SecureRandom.hex(8)}",
-      object: "chat.completion.chunk",
-      created: Time.now.to_i,
-      model: model,
-      choices: [ { index: 0, delta: { content: content }, finish_reason: nil } ]
+      chat_id: body["chat_id"],
+      message: messages.last.is_a?(Hash) ? messages.last["content"].to_s : "",
+      async: ActiveModel::Type::Boolean.new.cast(body["async"])
     }
+  end
+
+  def run_async(parsed)
+    runner = AgentRunner.new(chat_id: parsed[:chat_id], message: parsed[:message])
+    agent = runner.find_or_create_agent
+    AgentRunJob.perform_later(agent.id, parsed[:message])
+
+    render json: {
+      chat_id: agent.id,
+      status: "queued",
+      message: "Agent workflow started in background"
+    }, status: :accepted
+  end
+
+  def stream_chat_status(chat)
+    loop do
+      chat.reload
+      last_message = chat.messages.order(:created_at).last
+      sse.write_event(format_status_payload(chat))
+      break if last_message&.role == "assistant"
+
+      sleep 1.0
+    end
+    sse.write_done
+  end
+
+  def format_status_payload(chat)
+    last_msg = chat.messages.order(:created_at).last
+    is_complete = last_msg&.role == "assistant"
+
+    {
+      chat_id: chat.id,
+      status: is_complete ? "complete" : "running",
+      complete: is_complete,
+      messages_count: chat.messages.count,
+      last_message: last_msg ? { role: last_msg.role, content: last_msg.content.to_s } : nil
+    }
+  end
+
+  def render_bad_request(message)
+    render json: { error: message }, status: :bad_request
   end
 
   def set_cors_headers
     origin = request.headers["Origin"].presence || ENV.fetch("FRONTEND_ORIGIN", "*")
     response.headers["Access-Control-Allow-Origin"]  = origin
     response.headers["Vary"]                         = "Origin"
-    response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS, DELETE"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
   end
 

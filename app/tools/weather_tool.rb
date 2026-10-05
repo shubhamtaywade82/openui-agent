@@ -1,4 +1,6 @@
-class WeatherTool < RubyLLM::Tool
+# frozen_string_literal: true
+
+class WeatherTool < ApplicationTool
   description "Get the current weather for a city"
 
   param :city, type: :string, desc: "City name, e.g. Tokyo, Berlin, London"

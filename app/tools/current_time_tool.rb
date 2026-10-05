@@ -1,4 +1,6 @@
-class CurrentTimeTool < RubyLLM::Tool
+# frozen_string_literal: true
+
+class CurrentTimeTool < ApplicationTool
   description "Returns the current date and time"
 
   def execute

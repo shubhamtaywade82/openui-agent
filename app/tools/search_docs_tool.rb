@@ -1,4 +1,6 @@
-class SearchDocsTool < RubyLLM::Tool
+# frozen_string_literal: true
+
+class SearchDocsTool < ApplicationTool
   description "Search project documentation and knowledge base for relevant information"
 
   param :query, type: :string, desc: "Search query or keywords"
@@ -6,7 +8,7 @@ class SearchDocsTool < RubyLLM::Tool
   DOCS_PATH = Rails.root.join("docs")
 
   def execute(query:)
-    return { error: "Docs directory does not exist" } unless DOCS_PATH.exist?
+    return error_result("Docs directory does not exist") unless DOCS_PATH.exist?
 
     matched = find_matches(query)
     return { message: "No documents found matching '#{query}'" } if matched.empty?

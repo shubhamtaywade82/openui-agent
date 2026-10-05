@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class TaskManagerTool < RubyLLM::Tool
+class TaskManagerTool < ApplicationTool
   description "Manage tasks (list, add, or complete tasks) for the current user session."
 
   param :action, type: :string, desc: "Action to perform: 'list', 'create', or 'complete'"
@@ -32,7 +32,7 @@ class TaskManagerTool < RubyLLM::Tool
   private
 
   def create_task(title, priority)
-    return { error: "Title is required to create a task" } if title.to_s.strip.empty?
+    return error_result("Title is required to create a task") if title.to_s.strip.empty?
 
     task = {
       id: self.class.tasks.size + 1,
@@ -46,7 +46,7 @@ class TaskManagerTool < RubyLLM::Tool
 
   def complete_task(title)
     task = self.class.tasks.find { |t| t[:title].casecmp?(title.to_s.strip) }
-    return { error: "Task not found: #{title}" } unless task
+    return error_result("Task not found: #{title}") unless task
 
     task[:completed] = true
     { success: true, task: task }

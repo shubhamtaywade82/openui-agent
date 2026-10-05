@@ -2,7 +2,7 @@ require "net/http"
 require "json"
 require "uri"
 
-class WebSearchTool < RubyLLM::Tool
+class WebSearchTool < ApplicationTool
   description "Search the live web for current information, news, facts, or documentation"
 
   param :query, type: :string, desc: "Search query"
@@ -16,7 +16,7 @@ class WebSearchTool < RubyLLM::Tool
     elsif ENV["BRAVE_API_KEY"].present?
       brave_search(query, limit)
     else
-      { error: "No search key configured. Set TAVILY_API_KEY or BRAVE_API_KEY in .env." }
+      error_result("No search key configured. Set TAVILY_API_KEY or BRAVE_API_KEY in .env.")
     end
   end
 
