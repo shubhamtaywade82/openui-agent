@@ -22,22 +22,44 @@ module SseStreaming
     response.headers["X-Accel-Buffering"] = "no"
   end
 
-  def stream_agent(runner)
+  def stream_agent(runner, agui: false)
     setup_sse_headers
     agent = runner.find_or_create_agent
-    sse.write_chat_id(agent.id)
-
-    streamed_content = stream_chunks(runner, agent)
-    sse.write_chunk(EMPTY_RESPONSE_FALLBACK, model: agent.model.model_id) unless streamed_content
-    sse.write_done
+    agui ? stream_agui(runner, agent) : stream_openai(runner, agent)
   rescue IOError, Errno::EPIPE, ActionController::Live::ClientDisconnected
     # Client disconnected before completion — terminate stream cleanly
   rescue StandardError => e
     Rails.logger.error { "[SseStreaming] #{e.class}: #{e.message}" }
-    sse.write_error(e.message)
+    agui ? sse.write_run_error(e.message) : sse.write_error(e.message)
     sse.write_done
   ensure
     sse.close
+  end
+
+  def stream_openai(runner, agent)
+    sse.write_chat_id(agent.id)
+    streamed_content = stream_chunks(runner, agent)
+    sse.write_chunk(EMPTY_RESPONSE_FALLBACK, model: agent.model.model_id) unless streamed_content
+    sse.write_done
+  end
+
+  def stream_agui(runner, agent)
+    sse.write_run_started(agent.id)
+    sse.write_message_start
+    streamed_content = false
+    runner.call_with_stream(
+      on_tool_call: ->(call) { sse.write_tool_call(call.id, call.name, call.arguments) },
+      on_tool_result: ->(call_id, result) { sse.write_tool_result(call_id, result) }
+    ) do |chunk|
+      next unless chunk.content.present?
+
+      streamed_content = true
+      sse.write_text_delta(chunk.content)
+    end
+    sse.write_text_delta(EMPTY_RESPONSE_FALLBACK) unless streamed_content
+    sse.write_message_end
+    sse.write_run_finished(agent.id)
+    sse.write_done
   end
 
   def stream_chunks(runner, agent)

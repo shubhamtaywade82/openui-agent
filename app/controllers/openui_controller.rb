@@ -21,7 +21,7 @@ class OpenuiController < ApplicationController
       run_async(parsed)
     else
       runner = AgentRunner.new(chat_id: parsed[:chat_id], message: parsed[:message])
-      stream_agent(runner)
+      stream_agent(runner, agui: parsed[:protocol] == "ag-ui")
     end
   end
 
@@ -80,7 +80,8 @@ class OpenuiController < ApplicationController
     {
       chat_id: body["chat_id"] || body["threadId"],
       message: messages.last.is_a?(Hash) ? messages.last["content"].to_s : "",
-      async: ActiveModel::Type::Boolean.new.cast(body["async"])
+      async: ActiveModel::Type::Boolean.new.cast(body["async"]),
+      protocol: body["protocol"]
     }
   end
 

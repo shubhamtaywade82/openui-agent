@@ -22,9 +22,10 @@ class AgentRunner
     [ agent, response ]
   end
 
-  def call_with_stream(&block)
+  def call_with_stream(on_tool_call: nil, on_tool_result: nil, &block)
     agent = find_or_create_agent
     limit_tool_rounds(agent)
+    report_tool_events(agent, on_tool_call, on_tool_result)
     agent.ask(@message, &block)
     agent
   end
@@ -39,6 +40,16 @@ class AgentRunner
   end
 
   private
+
+  # Tool results carry no call id, so remember the id from the preceding call (tools run sequentially)
+  def report_tool_events(agent, on_tool_call, on_tool_result)
+    current_call_id = nil
+    agent.before_tool_call do |tool_call|
+      current_call_id = tool_call.id
+      on_tool_call&.call(tool_call)
+    end
+    agent.after_tool_result { |result| on_tool_result&.call(current_call_id, result) }
+  end
 
   def limit_tool_rounds(agent)
     rounds = 0

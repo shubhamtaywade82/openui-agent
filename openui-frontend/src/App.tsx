@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { AgentInterface, openAIAdapter, openAIMessageFormat } from "@openuidev/react-ui"
-import { fetchLLM, type ChatStorage, type Thread } from "@openuidev/react-headless"
+import { AgentInterface, openAIMessageFormat } from "@openuidev/react-ui"
+import { agUIAdapter, fetchLLM, type ChatStorage, type Thread } from "@openuidev/react-headless"
 import { observability, toErrorInfo } from "@openuidev/observability"
 import { OpenUIDevtools } from "@openuidev/devtools"
 import {
@@ -117,7 +117,9 @@ const storage: ChatStorage = {
 
 const llm = fetchLLM({
   url: `${API_ROOT}/openui`,
-  streamAdapter: openAIAdapter(),
+  streamAdapter: agUIAdapter(),
+  // Opts in to typed AG-UI events so tool calls show up in the chat timeline
+  body: { protocol: "ag-ui" },
   messageFormat: openAIMessageFormat,
 })
 
@@ -221,7 +223,7 @@ export default function App() {
           starters={STARTERS}
         />
       </AgentInterface>
-      <OpenUIDevtools position="bottom-right" autoOpenOnError maxEvents={100} theme={colorMode} />
+      <OpenUIDevtools position="bottom-right" autoOpenOnError errorsOnly={false} maxEvents={100} theme={colorMode} />
     </div>
   )
 }
