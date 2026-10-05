@@ -22,6 +22,18 @@ class BinanceFuturesTool < ApplicationTool
   DEFAULT_INTERVAL = "1h"
   CANDLE_LIMIT = 250 # enough history for the 200-period EMA
   FUNDING_HISTORY_LIMIT = 10
+  # Field order must match the FuturesCard / IndicatorsCard signatures in the system prompt.
+  OVERVIEW_CARD_FIELDS = %i[symbol mark_price funding_rate_percent open_interest_usd long_short_ratio
+                            basis_percent change_percent_24h open_interest_change_24h_percent].freeze
+  INDICATOR_CARD_FIELDS = %i[symbol interval price rsi_14 ema_20 ema_50 ema_200 atr_percent vwap].freeze
+  # A 4B local model ignores far-away prompt rules but copies what the tool result tells it to.
+  DISCLAIMER_LINE = 'disclaimer = TextContent("Analysis only, not financial advice.")'
+  RENDER_INSTRUCTION = [
+    DISCLAIMER_LINE,
+    "Copy every line above exactly. Define root = Card([...]) once, listing those names plus one summary TextContent variable " \
+    "of 2-4 sentences that uses only values from this result. Do not draw other charts, invent history values, or add buttons " \
+    "for entries, exits or trade signals."
+  ].freeze
   OPEN_INTEREST_WINDOW_HOURS = 25 # 25 hourly points span 24 hours
 
   def execute(symbol:, action: "overview", interval: DEFAULT_INTERVAL)
@@ -48,10 +60,8 @@ class BinanceFuturesTool < ApplicationTool
     premium = fetch_json("/fapi/v1/premiumIndex?symbol=#{sym}")
     return error_result("Futures contract not found: #{sym}") unless premium.is_a?(Hash) && premium["markPrice"]
 
-    price_snapshot(sym, premium)
-      .merge(ticker_24h(sym))
-      .merge(open_interest(sym))
-      .merge(long_short_ratio(sym))
+    data = price_snapshot(sym, premium).merge(ticker_24h(sym)).merge(open_interest(sym)).merge(long_short_ratio(sym))
+    data.merge(render_as: [ "futuresCard = FuturesCard(#{dsl_args(data, OVERVIEW_CARD_FIELDS)})" ] + RENDER_INSTRUCTION)
   end
 
   def price_snapshot(sym, premium)
@@ -96,6 +106,14 @@ class BinanceFuturesTool < ApplicationTool
   end
 
   def indicators(sym, interval)
+    data = indicator_values(sym, interval)
+    return data if data[:error]
+
+    lines = [ "indicatorsCard = IndicatorsCard(#{dsl_args(data, INDICATOR_CARD_FIELDS)})", "candleChart = CandleChart(\"#{sym}\", \"#{interval}\")" ]
+    data.merge(render_as: lines + RENDER_INSTRUCTION)
+  end
+
+  def indicator_values(sym, interval)
     candles = fetch_candles(sym, interval)
     return error_result("Not enough candle data for #{sym} #{interval}") if candles.size < 50
 
@@ -133,6 +151,15 @@ class BinanceFuturesTool < ApplicationTool
     rows[0...-1].map do |row|
       { high: row[2].to_f, low: row[3].to_f, close: row[4].to_f, volume: row[5].to_f }
     end
+  end
+
+  # Positional openui-lang arguments; missing values become null.
+  def dsl_args(data, fields)
+    fields.map { |field| dsl_value(data[field]) }.join(", ")
+  end
+
+  def dsl_value(value)
+    value.nil? ? "null" : value.to_json
   end
 
   def round(value)
