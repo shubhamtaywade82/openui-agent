@@ -8,6 +8,12 @@ class SearchDocsTool < ApplicationTool
   DOCS_PATH = Rails.root.join("docs")
   MAX_RESULTS = 5
   MIN_TERM_LENGTH = 3
+  RENDER_CARD_COUNT = 3
+  # A small local model improvises DocPreviewCard arguments and invents URLs, so the tool hands it exact lines to copy.
+  RENDER_INSTRUCTION = [
+    "Copy the lines above exactly. Define root = Card([...]) once, listing those names plus one TextContent variable of 1-3 sentences " \
+    "that answers the question using only the snippets above. Never invent paths, links or document names."
+  ].freeze
   STOP_WORDS = %w[and the for with about what how are does from that this into your].freeze
 
   def execute(query:)
@@ -19,10 +25,18 @@ class SearchDocsTool < ApplicationTool
     matched = find_matches(terms)
     return { message: "No documents found matching '#{query}'" } if matched.empty?
 
-    { query: query, results: matched.first(MAX_RESULTS) }
+    results = matched.first(MAX_RESULTS)
+    { query: query, results: results, render_as: render_lines(results) + RENDER_INSTRUCTION }
   end
 
   private
+
+  def render_lines(results)
+    results.first(RENDER_CARD_COUNT).each_with_index.map do |result, index|
+      snippet = result[:snippet].squish
+      "docCard#{index + 1} = DocPreviewCard(#{result[:title].to_json}, #{snippet.to_json}, #{result[:path].to_json})"
+    end
+  end
 
   def search_terms(query)
     query.downcase.scan(/[[:alnum:]]+/).reject { |word| word.length < MIN_TERM_LENGTH || STOP_WORDS.include?(word) }.uniq
