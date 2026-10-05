@@ -74,7 +74,7 @@ export default function App() {
   }, [])
 
   return (
-    <>
+    <div style={{ height: "100vh", width: "100vw", display: "flex", flexDirection: "column" }}>
       <AgentInterface
         llm={llm}
         componentLibrary={myLibrary}
@@ -83,6 +83,6 @@ export default function App() {
         starters={STARTERS}
       />
       <OpenUIDevtools position="bottom-right" />
-    </>
+    </div>
   )
 }
