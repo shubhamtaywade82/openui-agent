@@ -97,7 +97,7 @@ class OpenuiController < ApplicationController
   end
 
   def stream_chat_status(chat)
-    loop do
+    60.times do
       chat.reload
       last_message = chat.messages.order(:created_at).last
       sse.write_event(format_status_payload(chat))

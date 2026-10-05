@@ -1,5 +1,7 @@
 require "net/http"
 require "uri"
+require "resolv"
+require "ipaddr"
 require "nokogiri"
 
 class WebScrapeTool < ApplicationTool
@@ -10,6 +12,7 @@ class WebScrapeTool < ApplicationTool
   def execute(url:)
     uri = URI.parse(url.to_s.strip) rescue nil
     return error_result("Invalid URL. Must begin with http:// or https://") unless valid_http_uri?(uri)
+    return error_result("Access to private/local network addresses is prohibited") unless safe_host?(uri.host)
 
     markdown = try_markdown_variants(uri)
     if markdown.present?
@@ -30,6 +33,21 @@ class WebScrapeTool < ApplicationTool
 
   def valid_http_uri?(uri)
     uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+  end
+
+  def safe_host?(host)
+    return false if host.blank?
+
+    # Resolve IP address to detect internal, loopback, or cloud-metadata destinations
+    ips = Resolv.getaddresses(host)
+    return false if ips.empty?
+
+    ips.none? do |ip_str|
+      ip = IPAddr.new(ip_str)
+      ip.loopback? || ip.private? || ip.link_local?
+    end
+  rescue StandardError
+    false
   end
 
   def try_markdown_variants(original_uri)
