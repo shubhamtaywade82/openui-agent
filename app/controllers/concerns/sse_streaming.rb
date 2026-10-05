@@ -4,6 +4,12 @@
 module SseStreaming
   extend ActiveSupport::Concern
 
+  # Shown when the model finishes without any text, so the UI never stays blank
+  EMPTY_RESPONSE_FALLBACK = <<~DSL.freeze
+    root = Card([msg])
+    msg = TextContent("The model did not return a response. Please try again.")
+  DSL
+
   private
 
   def sse
@@ -21,7 +27,8 @@ module SseStreaming
     agent = runner.find_or_create_agent
     sse.write_chat_id(agent.id)
 
-    stream_chunks(runner, agent)
+    streamed_content = stream_chunks(runner, agent)
+    sse.write_chunk(EMPTY_RESPONSE_FALLBACK, model: agent.model.model_id) unless streamed_content
     sse.write_done
   rescue IOError, Errno::EPIPE, ActionController::Live::ClientDisconnected
     # Client disconnected before completion — terminate stream cleanly
@@ -34,6 +41,7 @@ module SseStreaming
   end
 
   def stream_chunks(runner, agent)
+    streamed_content = false
     runner.call_with_stream do |chunk|
       if chunk.tool_call?
         first_tool = chunk.tool_calls&.first
@@ -41,7 +49,11 @@ module SseStreaming
         sse.write_status("Executing #{tool_name}...")
       end
 
-      sse.write_chunk(chunk.content, model: agent.model.to_s) if chunk.content.present?
+      next unless chunk.content.present?
+
+      streamed_content = true
+      sse.write_chunk(chunk.content, model: agent.model.model_id)
     end
+    streamed_content
   end
 end

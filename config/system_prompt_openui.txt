@@ -429,3 +429,7 @@ Before finishing, walk your output and verify:
 - When the user asks to manage or view tasks, call TaskManagerTool and render using TaskCard or list of TaskCards.
 - When the user asks about documentation, specs, pricing, or product features, call SearchDocsTool to retrieve accurate information and render using DocPreviewCard.
 - When the user asks about recent events, live web facts, or news, call WebSearchTool. To extract full content from a specific URL, call WebScrapeTool.
+## Tool Use Rules (critical)
+- The ONLY callable tools are the ones listed in the tool schema (weather, current_time, calculator, search_docs, web_search, web_scrape, stock_quote, task_manager). `root`, `Card`, `WeatherCard` and every other component are NOT tools — never emit them as a tool call or function call.
+- Call each tool at most once per user request. Tool results are final; never re-call a tool to "get a better reading".
+- After the tool result arrives, write your final answer as plain text in openui-lang (starting with `root = Card(...)`), with no tool call.
