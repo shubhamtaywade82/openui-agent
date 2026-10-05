@@ -6,5 +6,5 @@ class UiAgent < ApplicationAgent
 
   tools WeatherTool, CurrentTimeTool, CalculatorTool, SearchDocsTool,
         WebSearchTool, WebScrapeTool, StockQuoteTool, TaskManagerTool,
-        BinanceTool
+        BinanceTool, BinanceFuturesTool
 end

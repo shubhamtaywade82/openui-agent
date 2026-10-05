@@ -3,6 +3,7 @@ import { createLibrary, defineComponent } from "@openuidev/react-lang"
 import { openuiChatLibrary } from "@openuidev/react-ui/genui-lib"
 import { getFaviconUrl, type CardSource } from "@openuidev/react-ui"
 import { z } from "zod"
+import { CandleChart, FuturesCard, IndicatorsCard } from "./futures-components"
 import {
   Sun, CloudSun, CloudRain, CloudSnow, Droplets, Wind, TrendingUp, TrendingDown, CheckCircle2, Circle, BookOpen, Activity, Radio
 } from "lucide-react"
@@ -337,5 +338,6 @@ export const myLibrary = createLibrary({
     ...Object.values(openuiChatLibrary.components || {}).filter((component) => component.name !== "Card"),
     CardWithCollapsibleSources,
     WeatherCard, StockCard, TaskCard, DocPreviewCard, CryptoCard,
+    FuturesCard, IndicatorsCard, CandleChart,
   ],
 })
