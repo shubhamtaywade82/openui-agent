@@ -1,6 +1,19 @@
 import { createLibrary, defineComponent } from "@openuidev/react-lang"
 import { openuiChatLibrary } from "@openuidev/react-ui/genui-lib"
 import { z } from "zod"
+import {
+  Sun,
+  CloudSun,
+  CloudRain,
+  CloudSnow,
+  Droplets,
+  Wind,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle2,
+  Circle,
+  BookOpen,
+} from "lucide-react"
 
 interface WeatherCardProps {
   city: string
@@ -8,6 +21,14 @@ interface WeatherCardProps {
   condition: string
   humidity?: number
   wind?: string
+}
+
+function getWeatherIcon(condition: string) {
+  const c = condition.toLowerCase()
+  if (c.includes("rain") || c.includes("drizzle")) return <CloudRain size={22} className="gen-weather__icon" />
+  if (c.includes("snow") || c.includes("ice")) return <CloudSnow size={22} className="gen-weather__icon" />
+  if (c.includes("cloud")) return <CloudSun size={22} className="gen-weather__icon" />
+  return <Sun size={22} className="gen-weather__icon gen-weather__icon--sun" />
 }
 
 export const WeatherCard = defineComponent({
@@ -22,26 +43,35 @@ export const WeatherCard = defineComponent({
   }),
   component: ({ props }: { props: WeatherCardProps }) => (
     <article className="gen-card gen-weather">
+      <div className="gen-card__glow-mesh" aria-hidden="true" />
       <header className="gen-card__head">
-        <h4>{props.city}</h4>
-        <span>{props.condition}</span>
+        <div>
+          <h4>{props.city}</h4>
+          <span className="gen-weather__condition-label">{props.condition}</span>
+        </div>
+        <div className="gen-weather__icon-badge">{getWeatherIcon(props.condition)}</div>
       </header>
-      <p className="gen-weather__temp">{props.temperature}°C</p>
+      <div className="gen-weather__body">
+        <span className="gen-weather__temp">{props.temperature}°</span>
+        <span className="gen-weather__unit">C</span>
+      </div>
       {(props.humidity !== undefined || props.wind) && (
-        <dl className="gen-card__facts">
+        <div className="gen-weather__facts-grid">
           {props.humidity !== undefined && (
-            <div>
-              <dt>Humidity</dt>
-              <dd>{props.humidity}%</dd>
+            <div className="gen-weather__fact-tile">
+              <Droplets size={13} className="gen-weather__fact-icon" />
+              <span>Humidity</span>
+              <strong>{props.humidity}%</strong>
             </div>
           )}
           {props.wind && (
-            <div>
-              <dt>Wind</dt>
-              <dd>{props.wind}</dd>
+            <div className="gen-weather__fact-tile">
+              <Wind size={13} className="gen-weather__fact-icon" />
+              <span>Wind</span>
+              <strong>{props.wind}</strong>
             </div>
           )}
-        </dl>
+        </div>
       )}
     </article>
   ),
@@ -73,19 +103,26 @@ export const StockCard = defineComponent({
 
     return (
       <article className={`gen-card gen-stock gen-stock--${isUp ? "up" : "down"}`}>
+        <div className="gen-card__glow-mesh" aria-hidden="true" />
         <header className="gen-card__head">
-          <h4>{props.symbol}</h4>
-          <span>{props.name}</span>
+          <div>
+            <span className="gen-stock__ticker-badge">{props.symbol}</span>
+            <span className="gen-stock__company-name">{props.name}</span>
+          </div>
+          <span className={`gen-stock__trend-pill gen-stock__trend-pill--${isUp ? "up" : "down"}`}>
+            {isUp ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+            {sign}{props.change_percent.toFixed(2)}%
+          </span>
         </header>
-        <p className="gen-stock__price">
-          <small>{props.currency || "$"}</small>
-          {props.price.toFixed(2)}
-        </p>
-        <p className="gen-stock__change">
-          {isUp ? "▲" : "▼"} {sign}
-          {props.change.toFixed(2)} ({sign}
-          {props.change_percent.toFixed(2)}%)
-        </p>
+        <div className="gen-stock__main">
+          <div className="gen-stock__price-row">
+            <span className="gen-stock__currency">{props.currency || "$"}</span>
+            <span className="gen-stock__price-val">{props.price.toFixed(2)}</span>
+          </div>
+          <span className="gen-stock__diff-label">
+            {sign}{props.change.toFixed(2)} today
+          </span>
+        </div>
       </article>
     )
   },
@@ -109,16 +146,19 @@ export const TaskCard = defineComponent({
   }),
   component: ({ props }: { props: TaskCardProps }) => {
     const priority = (props.priority || "medium").toLowerCase()
-    const level = priority === "urgent" || priority === "high" ? "hot" : "calm"
-
     return (
-      <article className={`gen-card gen-task gen-task--${level}${props.completed ? " is-done" : ""}`}>
-        <span className="gen-task__check" aria-hidden="true">
-          {props.completed ? "✓" : ""}
+      <article className={`gen-card gen-task gen-task--${priority}${props.completed ? " is-done" : ""}`}>
+        <span className="gen-task__check-icon" aria-hidden="true">
+          {props.completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
         </span>
-        <div>
-          <h4>{props.title}</h4>
-          <span className="gen-task__priority">{props.completed ? "Done" : `${priority} priority`}</span>
+        <div className="gen-task__body">
+          <div className="gen-task__meta-row">
+            {props.id && <span className="gen-task__id-badge">#{props.id}</span>}
+            <span className={`gen-task__priority-badge gen-task__priority--${priority}`}>
+              {priority}
+            </span>
+          </div>
+          <h4 className="gen-task__title">{props.title}</h4>
         </div>
       </article>
     )
@@ -141,11 +181,15 @@ export const DocPreviewCard = defineComponent({
   }),
   component: ({ props }: { props: DocPreviewCardProps }) => (
     <article className="gen-card gen-doc">
+      <div className="gen-card__glow-mesh" aria-hidden="true" />
       <header className="gen-card__head">
-        <h4>{props.title}</h4>
-        {props.path && <code>{props.path}</code>}
+        <div className="gen-doc__title-wrapper">
+          <BookOpen size={16} className="gen-doc__icon" />
+          <h4>{props.title}</h4>
+        </div>
       </header>
-      <p>{props.snippet}</p>
+      {props.path && <div className="gen-doc__path-badge"><code>{props.path}</code></div>}
+      <p className="gen-doc__snippet">{props.snippet}</p>
     </article>
   ),
 })
