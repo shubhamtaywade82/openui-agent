@@ -4,6 +4,6 @@ class UiAgent < RubyLLM::Agent
 
   instructions { File.read(Rails.root.join("config/system_prompt_openui.txt")) }
 
-  tools WeatherTool, CurrentTimeTool, CalculatorTool
+  tools WeatherTool, CurrentTimeTool, CalculatorTool, SearchDocsTool
   temperature 0.3
 end
