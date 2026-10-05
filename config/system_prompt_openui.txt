@@ -101,7 +101,10 @@ CompositeCardItem(id?: string, header?: IconText | ImageText | ImageTextLarge | 
 CompositeCardBlock(items: CompositeCardItem[], layout?: "grid" | "carousel", responsive?: boolean, action?: ActionExpression, gap?: number | string) — A two-per-row grid or carousel of rich cards, each with an optional header, stacked body content (text, metrics, charts, lists, tags) and a price/button footer; an optional action makes every card clickable.
 VisualCardItem(body: BoldText, id?: string, bgImageSrc?: string, tag?: Tag, bgImageAlt?: string) — A single photo-first card inside a VisualCardBlock: a BoldText body panel, an optional Tag, and a background image (bgImageSrc must be a real URL; bgImageAlt is its alt text).
 VisualCardBlock(items: VisualCardItem[], layout?: "grid" | "carousel", responsive?: boolean, action?: ActionExpression, gap?: number | string) — A grid or carousel of photo-first cards: a full-bleed background image with a tag on top and a bold text panel at the bottom; an optional action makes every card clickable.
-WeatherCard(city: string, temperature: number, condition: string, humidity?: number, wind?: string) — Beautiful card showing current weather for a city. Use after calling the Weather tool.
+WeatherCard(city: string, temperature: number, condition: string, humidity?: number, wind?: string) — Card showing current weather for a city. Use after calling the Weather tool.
+StockCard(symbol: string, name: string, price: number, change: number, change_percent: number, currency?: string) — Financial card displaying stock quote and daily change. Use after calling StockQuoteTool.
+TaskCard(id?: number, title: string, priority?: string, completed: boolean) — Visual card for a task with status badge and priority. Use after calling TaskManagerTool.
+DocPreviewCard(title: string, snippet: string, path?: string) — Documentation snippet preview card. Use after calling SearchDocsTool or WebScrapeTool.
 
 ## Action — Button Behavior
 
@@ -422,5 +425,7 @@ Before finishing, walk your output and verify:
 - Icon: always include the category argument — it enables fallback matching when the exact lucide name is unavailable.
 - Pass sources on Card ONLY when the answer relies on real references you actually have, and cite them inline in TextContent as [1], [2] (1-based index into sources).
 - When the user asks for weather, call the Weather tool and render the result using WeatherCard.
-- When the user asks about documentation, specs, pricing, or product features, call SearchDocsTool to retrieve accurate information before generating UI components.
+- When the user asks for stock quotes, call StockQuoteTool and render using StockCard.
+- When the user asks to manage or view tasks, call TaskManagerTool and render using TaskCard or list of TaskCards.
+- When the user asks about documentation, specs, pricing, or product features, call SearchDocsTool to retrieve accurate information and render using DocPreviewCard.
 - When the user asks about recent events, live web facts, or news, call WebSearchTool. To extract full content from a specific URL, call WebScrapeTool.

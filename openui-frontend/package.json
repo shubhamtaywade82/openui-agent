@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@openuidev/devtools": "^0.2.2",
+    "@openuidev/observability": "^0.0.4",
     "@openuidev/react-headless": "^0.16.3",
     "@openuidev/react-lang": "^0.3.0",
     "@openuidev/react-ui": "^0.16.3",

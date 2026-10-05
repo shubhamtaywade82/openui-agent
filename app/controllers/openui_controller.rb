@@ -89,13 +89,21 @@ class OpenuiController < ApplicationController
   def stream_agent_response(agent, user_content)
     agent.ask(user_content) do |chunk|
       if chunk.tool_call?
-        name = chunk.tool_calls&.first&.dig(:name) || "tool"
+        name = extract_tool_name(chunk)
         response.stream.write("data: #{ { status: "Executing #{name}..." }.to_json }\n\n")
       end
 
       next unless chunk.content.present?
+
       response.stream.write("data: #{sse_chunk(agent.model.to_s, chunk.content).to_json}\n\n")
     end
+  end
+
+  def extract_tool_name(chunk)
+    first_call = chunk.tool_calls&.first
+    return "tool" unless first_call
+
+    first_call.respond_to?(:name) ? first_call.name : "tool"
   end
 
   def sse_chunk(model, content)
