@@ -59,7 +59,7 @@ group :development do
   gem "web-console"
 end
 
-gem "ruby_llm", "~> 1.16"
+gem "ruby_llm", "~> 2.2"
 
 gem "dotenv-rails", "~> 3.2"
 
